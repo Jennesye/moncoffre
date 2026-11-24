@@ -283,7 +283,7 @@ function renderUnlock(msg) {
     <p>${msg ? h(msg) : "Entrez votre code."}</p>
     <label class="f" for="mpw">Code<input class="in" id="mpw" type="password" autocomplete="current-password" required></label>
     <div class="err" id="err" role="alert"></div>
-    <button class="btn primary" id="unlockBtn" type="submit">Déverrouiller</button>
+    <button class="btn primary" id="unlockBtn" type="submit">Ouvrir</button>
   </form></div>`;
   const input = document.getElementById("mpw");
   setTimeout(() => input.focus(), 50);
@@ -298,7 +298,7 @@ function renderUnlock(msg) {
       S = { ...r, demo: false }; fails = 0; startSession();
     } catch {
       fails++; if (fails >= 3) waitUntil = Date.now() + Math.min(300, 2 ** (fails - 2) * 5) * 1000;
-      btn.disabled = false; btn.textContent = "Déverrouiller"; input.value = "";
+      btn.disabled = false; btn.textContent = "Ouvrir"; input.value = "";
       err.textContent = fails >= 3 ? `Mot de passe incorrect. Patientez ${Math.ceil((waitUntil - Date.now()) / 1000)} s avant de réessayer.` : "Mot de passe incorrect.";
     }
   };
