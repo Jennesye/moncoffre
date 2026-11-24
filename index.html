@@ -135,6 +135,18 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .menu small { color: var(--muted); font-size: 13px; }
 .menu .danger-t { color: var(--danger); font-weight: 600; }
 
+.who { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 4px 12px 4px 4px; font-weight: 600; font-size: 15px; color: var(--ink); max-width: 100%; min-width: 0; }
+.who .dot, .pf .dot { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 14px; }
+.who span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.pf { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); text-align: center; }
+.pf .dot { width: 56px; height: 56px; font-size: 24px; }
+.pf strong { overflow-wrap: anywhere; }
+.pf small { color: var(--muted); }
+.pf.add { border-style: dashed; color: var(--accent); background: transparent; justify-content: center; }
+.prow { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--line); }
+.prow:first-child { border-top: 0; }
+.prow .in { flex: 1; min-width: 0; padding: 8px 10px; font-size: 16px; }
 .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 96px); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 15px; z-index: 40; max-width: calc(100% - 32px); text-align: center; }
 .privacy { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: grid; place-items: center; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -218,6 +230,20 @@ function writeSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringi
 let S = null;          // { key, salt, iter, data:{entries:[]}, demo:bool } quand déverrouillé
 let settings = readSettings();
 let query = "";
+let curPid = null;     // profil affiché
+const PCOLORS = ["#2f6fb0", "#b0524f", "#8a3d7a", "#b07d1f", "#3d7a8a", "#0f6b5c"];
+const newId = () => crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random();
+// Profils : un seul code pour tout le coffre, un profil par personne.
+// Les anciens coffres (sans profils) sont rangés dans un premier profil « Moi ».
+function ensureProfiles(data) {
+  if (!Array.isArray(data.entries)) data.entries = [];
+  if (!Array.isArray(data.profiles) || !data.profiles.length) data.profiles = [{ id: newId(), name: "Moi", color: PCOLORS[0] }];
+  const first = data.profiles[0].id, ids = new Set(data.profiles.map(p => p.id));
+  for (const e of data.entries) if (!e.pid || !ids.has(e.pid)) e.pid = first;
+  return data;
+}
+const profile = () => S.data.profiles.find(p => p.id === curPid) || S.data.profiles[0];
+const pDot = p => `<span class="dot" style="background:${p.color}" aria-hidden="true">${h((p.name || "?").trim().charAt(0).toUpperCase() || "?")}</span>`;
 let fails = 0, waitUntil = 0;
 let idleTimer = null, hiddenAt = 0, clipTimer = null;
 
@@ -233,6 +259,7 @@ const ICON = {
 };
 
 function toast(msg) {
+  document.querySelectorAll(".toast").forEach(x => x.remove());
   const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; t.setAttribute("role", "status");
   document.body.appendChild(t); setTimeout(() => t.remove(), 2400);
 }
@@ -266,7 +293,7 @@ function renderSetup() {
     const btn = document.getElementById("createBtn"); btn.disabled = true; btn.textContent = "Création…";
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const key = await deriveKey(a, salt, ITER);
-    S = { key, salt, iter: ITER, data: { entries: [] }, demo: false };
+    S = { key, salt, iter: ITER, data: ensureProfiles({ entries: [] }), demo: false };
     try { await save(); } catch { S = null; btn.disabled = false; btn.textContent = "Créer mon coffre"; return err.textContent = "Ce navigateur refuse d'enregistrer. Ouvrez l'app depuis l'écran d'accueil."; }
     try { navigator.storage?.persist?.(); } catch {}
     startSession();
@@ -314,7 +341,107 @@ async function save() {
   if (!S || S.demo) return;
   writeStore(await seal(S.key, S.salt, S.iter, S.data));
 }
-function startSession() { query = ""; renderMain(); bumpIdle(); }
+function startSession() {
+  query = "";
+  const migrate = !Array.isArray(S.data.profiles) || !S.data.profiles.length;
+  ensureProfiles(S.data);
+  if (migrate) save().catch(() => {});
+  if (S.data.profiles.length > 1) renderProfiles(); else { curPid = S.data.profiles[0].id; renderMain(); }
+  bumpIdle();
+}
+function renderProfiles() {
+  const ps = S.data.profiles;
+  $root.innerHTML = `<div class="wrap gate"><div class="gate-card" style="max-width:480px">
+    <h1>Qui êtes-vous ?</h1>
+    <div class="pgrid">${ps.map(p => { const n = S.data.entries.filter(e => e.pid === p.id).length;
+      return `<button class="pf" data-pid="${h(p.id)}">${pDot(p)}<strong>${h(p.name)}</strong><small>${n} site${n > 1 ? "s" : ""}</small></button>`; }).join("")}
+      <button class="pf add" id="pAdd">+ Ajouter un profil</button></div>
+    <button class="btn ghost" id="pLock" style="align-self:center">Fermer l'app</button>
+  </div></div>`;
+  $root.querySelectorAll(".pf[data-pid]").forEach(b => b.onclick = () => { curPid = b.dataset.pid; query = ""; renderMain(); });
+  document.getElementById("pAdd").onclick = () => openAddProfile(true);
+  document.getElementById("pLock").onclick = () => lock();
+}
+function openAddProfile(fromPicker) {
+  openSheet(`<div class="sheet-h"><h2>Nouveau profil</h2><button class="btn ghost" id="apC" type="button">Annuler</button></div>
+    <form id="apf" class="gate-card" style="max-width:none" autocomplete="off">
+      <label class="f" for="apName">Prénom<input class="in" id="apName" required maxlength="30" placeholder="ex. Paul"></label>
+      <button class="btn primary" type="submit">Créer le profil</button>
+    </form>`, sh => {
+    sh.querySelector("#apC").onclick = closeSheet;
+    setTimeout(() => sh.querySelector("#apName").focus(), 60);
+    sh.querySelector("#apf").onsubmit = async ev => {
+      ev.preventDefault();
+      const name = sh.querySelector("#apName").value.trim(); if (!name) return;
+      const p = { id: newId(), name, color: PCOLORS[S.data.profiles.length % PCOLORS.length] };
+      S.data.profiles.push(p); await save(); closeSheet();
+      if (fromPicker) renderProfiles(); else { curPid = p.id; renderMain(); }
+      toast("Profil « " + name + " » créé");
+    };
+  });
+}
+// Partage d'un profil : copie chiffrée avec un code de partage à part (pas le code de l'app).
+function openShare(pid) {
+  if (S.demo) return toast("Pas disponible en mode démo.");
+  const p = S.data.profiles.find(x => x.id === pid);
+  const list = S.data.entries.filter(e => e.pid === pid);
+  openSheet(`<div class="sheet-h"><h2>Partager « ${h(p.name)} »</h2><button class="btn ghost" id="shC" type="button">Annuler</button></div>
+    <form id="shf" class="gate-card" style="max-width:none" autocomplete="off">
+      <p style="margin:0;color:var(--muted)">Crée un fichier avec ${list.length > 1 ? "les " + list.length + " sites" : list.length === 1 ? "le site" : "les sites"} de ce profil uniquement, protégé par un code de partage. La personne l'ouvre dans sa propre app Herbier avec « Restaurer une sauvegarde ». C'est une copie : les changements faits ensuite ne se mettent pas à jour chez elle.</p>
+      <label class="f" for="shPw">Code de partage (8 caractères minimum)<input class="in" id="shPw" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" required></label>
+      <button class="btn sm" type="button" id="shGen" style="align-self:flex-start">Proposer un code</button>
+      <div class="note">Envoyez le fichier et le code par deux chemins différents : par exemple le fichier par mail, et le code par SMS ou de vive voix.</div>
+      <div class="err" id="shErr" role="alert"></div>
+      <button class="btn primary" type="submit" id="shGo">Préparer le fichier</button>
+    </form>`, sh => {
+    const $ = s => sh.querySelector(s);
+    $("#shC").onclick = closeSheet;
+    $("#shGen").onclick = () => { const w = ["tilleul","glycine","fougere","lavande","olivier","bruyere","sauge","lilas","myrte","verveine","acacia","ombelle"]; const r = n => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; }; $("#shPw").value = w[r(w.length)] + "-" + w[r(w.length)] + "-" + (100 + r(900)); };
+    $("#shf").onsubmit = async ev => {
+      ev.preventDefault();
+      const code = $("#shPw").value;
+      if (code.length < 8) return $("#shErr").textContent = "Choisissez au moins 8 caractères.";
+      $("#shGo").disabled = true; $("#shGo").textContent = "Préparation…";
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const key = await deriveKey(code, salt, ITER);
+      const blob = await seal(key, salt, ITER, { profiles: [p], entries: list, shared: true });
+      const file = new File([JSON.stringify({ ...blob, exportedAt: new Date().toISOString() })], `Herbier-${p.name.replace(/[^\p{L}\p{N}-]+/gu, "_")}-${today()}.json`, { type: "application/json" });
+      $("#shGo").remove();
+      const send = document.createElement("button"); send.type = "button"; send.className = "btn primary"; send.textContent = "Envoyer le fichier";
+      send.onclick = () => offerFile(file);
+      $("#shf").appendChild(send);
+      $("#shErr").textContent = ""; toast("Fichier prêt");
+    };
+  });
+}
+function openProfiles() {
+  const ps = S.data.profiles;
+  openSheet(`<div class="sheet-h"><h2>Profils</h2><button class="btn ghost" id="mpC">Fermer</button></div>
+    <p style="margin:0;color:var(--muted);font-size:14px">Un seul code ouvre l'app. Chaque profil a sa propre liste de sites.</p>
+    <div class="card">${ps.map(p => `<div class="prow">${pDot(p)}<input class="in" data-ren="${h(p.id)}" value="${h(p.name)}" maxlength="30" aria-label="Nom du profil">
+      <button class="btn sm" data-share="${h(p.id)}">Partager</button>
+      ${ps.length > 1 ? `<button class="btn sm danger" data-del="${h(p.id)}">Supprimer</button>` : ""}</div>`).join("")}</div>
+    <button class="btn" id="mpAdd">+ Ajouter un profil</button>`, sh => {
+    sh.querySelector("#mpC").onclick = () => { closeSheet(); renderMain(); };
+    sh.querySelector("#mpAdd").onclick = () => openAddProfile(false);
+    sh.querySelectorAll("[data-ren]").forEach(i => i.onchange = async () => {
+      const p = S.data.profiles.find(x => x.id === i.dataset.ren); const v = i.value.trim();
+      if (!v) { i.value = p.name; return; }
+      p.name = v; await save(); toast("Renommé");
+    });
+    sh.querySelectorAll("[data-share]").forEach(b => b.onclick = () => openShare(b.dataset.share));
+    sh.querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
+      const p = S.data.profiles.find(x => x.id === b.dataset.del);
+      const n = S.data.entries.filter(e => e.pid === p.id).length;
+      confirmSheet("Supprimer le profil " + p.name + " ?", n ? `Ses ${n} site${n > 1 ? "s" : ""} seront effacés aussi. Faites une sauvegarde avant si besoin.` : "Ce profil est vide.", "Supprimer", async () => {
+        S.data.entries = S.data.entries.filter(e => e.pid !== p.id);
+        S.data.profiles = S.data.profiles.filter(x => x.id !== p.id);
+        if (curPid === p.id) curPid = S.data.profiles[0].id;
+        await save(); renderMain(); toast("Profil supprimé");
+      });
+    });
+  });
+}
 function bumpIdle() {
   clearTimeout(idleTimer);
   if (S) idleTimer = setTimeout(() => lock("Fermé après " + settings.idleMin + " min sans activité."), settings.idleMin * 60000);
@@ -346,14 +473,16 @@ function startDemo() {
   const t = Date.now();
   const entries = DEMO.map((d, i) => ({ id: "d" + i, name: d[0], url: d[1], login: d[2], password: i === 7 ? "Fraise-Velo-42!" : genPassword(), notes: "", cat: null, created: t, updated: t }));
   entries[6].password = "Fraise-Velo-42!";
-  S = { key: null, salt: null, iter: 0, data: { entries }, demo: true };
+  const profiles = [{ id: "pA", name: "Moi", color: PCOLORS[0] }, { id: "pB", name: "Paul", color: PCOLORS[1] }];
+  entries.forEach((e, i) => e.pid = i % 4 === 3 ? "pB" : "pA");
+  S = { key: null, salt: null, iter: 0, data: { entries, profiles }, demo: true };
   startSession();
 }
 
 // ---------- Liste principale ----------
 function filtered() {
   const q = norm(query.trim());
-  const list = S.data.entries;
+  const list = S.data.entries.filter(e => e.pid === profile().id);
   if (!q) return list;
   return list.filter(e => norm([e.name, e.url, e.login, e.notes, catById(catOf(e)).name].join(" ")).includes(q));
 }
@@ -372,7 +501,7 @@ document.addEventListener("load", ev => { const t = ev.target; if (t.tagName ===
 function renderMain() {
   $root.innerHTML = `<div class="wrap">
     <header class="top">
-      <div class="top-row"><h1>Herbier</h1>
+      <div class="top-row"><button class="who" id="whoBtn" aria-label="Changer de profil">${pDot(profile())}<span>${h(profile().name)}</span>${S.data.profiles.length > 1 ? ICON.chev.replace('class="chev"', "") : ""}</button>
         <div class="row"><button class="iconbtn" id="setBtn" aria-label="Réglages et sauvegarde">${ICON.gear}</button>
         <button class="iconbtn" id="lockBtn" aria-label="Verrouiller">${ICON.lockSm}</button></div></div>
       ${S.demo ? '<div class="demo-banner">Démo avec des exemples. Rien n\'est enregistré. Verrouillez pour revenir au début.</div>' : ""}
@@ -383,6 +512,7 @@ function renderMain() {
   <button class="fab" id="addBtn" aria-label="Ajouter un site">${ICON.plus}</button>`;
   document.getElementById("lockBtn").onclick = () => lock();
   document.getElementById("setBtn").onclick = openSettings;
+  document.getElementById("whoBtn").onclick = () => S.data.profiles.length > 1 ? renderProfiles() : openProfiles();
   document.getElementById("addBtn").onclick = () => openForm(null);
   const q = document.getElementById("q");
   q.oninput = () => { query = q.value; renderGroups(); };
@@ -391,8 +521,8 @@ function renderMain() {
 function renderGroups() {
   const box = document.getElementById("groups"); if (!box) return;
   const items = filtered();
-  if (!S.data.entries.length) {
-    box.innerHTML = `<div class="empty"><strong>Votre coffre est vide</strong><span>Touchez le bouton + pour ajouter votre premier site. Il sera rangé automatiquement dans la bonne catégorie.</span></div>`;
+  if (!S.data.entries.some(e => e.pid === profile().id)) {
+    box.innerHTML = `<div class="empty"><strong>Aucun site pour ${h(profile().name)}</strong><span>Touchez le bouton + pour ajouter votre premier site. Il sera rangé automatiquement dans la bonne catégorie.</span></div>`;
     return;
   }
   if (!items.length) { box.innerHTML = `<div class="empty">Aucun résultat pour « ${h(query)} ».</div>`; return; }
@@ -481,7 +611,8 @@ function genPassword(len = 18) {
 }
 
 function openForm(id) {
-  const e = id ? S.data.entries.find(x => x.id === id) : { name: "", url: "", login: "", password: "", notes: "", cat: null };
+  const e = id ? S.data.entries.find(x => x.id === id) : { name: "", url: "", login: "", password: "", notes: "", cat: null, pid: profile().id };
+  const popts = S.data.profiles.map(p => `<option value="${h(p.id)}" ${e.pid === p.id ? "selected" : ""}>${h(p.name)}</option>`).join("");
   const opts = `<option value="">Automatique</option>` + ALLCATS.map(c => `<option value="${c.id}" ${e.cat === c.id ? "selected" : ""}>${h(c.name)}</option>`).join("");
   openSheet(`
     <div class="sheet-h"><h2>${id ? "Modifier" : "Nouveau site"}</h2><button class="btn ghost" id="fCancel" type="button">Annuler</button></div>
@@ -492,6 +623,7 @@ function openForm(id) {
       <label class="f" for="fPw">Mot de passe
         <span class="row"><input class="in" id="fPw" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" value="${h(e.password)}" style="font-family:var(--mono)"><button class="btn sm" type="button" id="fGen">Générer</button></span></label>
       <label class="f" for="fCat">Catégorie<select class="in" id="fCat">${opts}</select><span id="fGuess" style="font-weight:400"></span></label>
+      ${S.data.profiles.length > 1 ? `<label class="f" for="fPid">Profil<select class="in" id="fPid">${popts}</select></label>` : ""}
       <label class="f" for="fNotes">Notes (facultatif)<textarea class="in" id="fNotes" placeholder="question secrète, n° de contrat…">${h(e.notes)}</textarea></label>
       <button class="btn primary" type="submit">Enregistrer</button>
     </form>`, sh => {
@@ -510,11 +642,12 @@ function openForm(id) {
     $("#ef").onsubmit = async ev => {
       ev.preventDefault();
       const now = Date.now();
-      const vals = { name: $("#fName").value.trim(), url: $("#fUrl").value.trim(), login: $("#fLogin").value.trim(), password: $("#fPw").value, notes: $("#fNotes").value.trim(), cat: $("#fCat").value || null };
+      const vals = { name: $("#fName").value.trim(), url: $("#fUrl").value.trim(), login: $("#fLogin").value.trim(), password: $("#fPw").value, notes: $("#fNotes").value.trim(), cat: $("#fCat").value || null, pid: $("#fPid") ? $("#fPid").value : e.pid };
       let target;
       if (id) { target = S.data.entries.find(x => x.id === id); Object.assign(target, vals, { updated: now }); }
-      else { target = { id: crypto.randomUUID ? crypto.randomUUID() : String(now) + Math.random(), ...vals, created: now, updated: now }; S.data.entries.push(target); }
+      else { target = { id: newId(), ...vals, created: now, updated: now }; S.data.entries.push(target); }
       try { await save(); } catch { toast("Enregistrement impossible sur cet appareil."); return; }
+      if (target.pid !== profile().id) { closeSheet(); renderGroups(); toast("Enregistré dans le profil " + (S.data.profiles.find(p => p.id === target.pid)?.name || "")); return; }
       renderGroups(); openDetail(target.id); toast("Enregistré");
     };
   });
@@ -525,8 +658,9 @@ function openSettings() {
   const n = S.data.entries.length;
   openSheet(`<div class="sheet-h"><h2>Réglages</h2><button class="btn ghost" id="sClose">Fermer</button></div>
     <div class="card menu">
-      <button id="sExport"><strong>Faire une sauvegarde</strong><small>Fichier chiffré de ${n} identifiant${n > 1 ? "s" : ""}, à ranger dans Fichiers ou sur une clé USB. Il s'ouvre avec votre mot de passe maître.</small></button>
-      <button id="sImport"><strong>Restaurer une sauvegarde</strong><small>Ajoute ou remplace les identifiants à partir d'un fichier de sauvegarde.</small></button>
+      <button id="sExport"><strong>Faire une sauvegarde</strong><small>Fichier chiffré de ${n} identifiant${n > 1 ? "s" : ""} (tous les profils), à ranger dans Fichiers ou sur une clé USB. Il s'ouvre avec votre mot de passe maître.</small></button>
+      <button id="sImport"><strong>Restaurer une sauvegarde</strong><small>Ajoute ou remplace les identifiants à partir d'une sauvegarde, ou ajoute un profil qu'on vous a partagé.</small></button>
+      <button id="sProf"><strong>Profils</strong><small>${S.data.profiles.map(p => h(p.name)).join(", ")}. Ajouter, renommer ou supprimer.</small></button>
       <button id="sPw"><strong>Changer le mot de passe maître</strong></button>
     </div>
     <label class="f" for="sIdle">Verrouillage automatique
@@ -543,6 +677,7 @@ function openSettings() {
     $("#sExport").onclick = exportBackup;
     $("#sImport").onclick = () => pickBackup(false);
     $("#sPw").onclick = openChangePw;
+    $("#sProf").onclick = openProfiles;
     $("#sWipe").onclick = openWipe;
   });
 }
@@ -553,6 +688,11 @@ async function exportBackup() {
   const d = new Date(), stamp = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   const name = `Herbier-${stamp}.json`;
   const file = new File([JSON.stringify({ ...blob, exportedAt: d.toISOString() })], name, { type: "application/json" });
+  return offerFile(file);
+}
+const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+async function offerFile(file) {
+  const name = file.name;
   try {
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], title: name });
@@ -574,8 +714,8 @@ function pickBackup(fromSetup) {
     let blob; try { blob = JSON.parse(await f.text()); if (blob.app !== "moncoffre" || !blob.ct) throw 0; } catch { return toast("Ce fichier n'est pas une sauvegarde de l'app."); }
     openSheet(`<div class="sheet-h"><h2>Restaurer</h2><button class="btn ghost" id="rC">Annuler</button></div>
       <form id="rf" class="gate-card" style="max-width:none" autocomplete="off">
-        <p style="margin:0;color:var(--muted)">${h(f.name)}. Entrez le mot de passe maître qui était utilisé au moment de cette sauvegarde.</p>
-        <label class="f" for="rPw">Mot de passe de la sauvegarde<input class="in" id="rPw" type="password" required></label>
+        <p style="margin:0;color:var(--muted)">${h(f.name)}. Entrez le code de ce fichier : votre code de l'époque, ou le code de partage qu'on vous a donné.</p>
+        <label class="f" for="rPw">Code du fichier<input class="in" id="rPw" type="password" required></label>
         <div class="err" id="rErr" role="alert"></div>
         ${fromSetup || !S || S.demo ? "" : `<label class="f" for="rMode">Que faire ?<select class="in" id="rMode"><option value="merge">Ajouter aux identifiants actuels</option><option value="replace">Remplacer tout le coffre actuel</option></select></label>`}
         <button class="btn primary" type="submit" id="rGo">Restaurer</button>
@@ -585,19 +725,25 @@ function pickBackup(fromSetup) {
       $("#rf").onsubmit = async ev => {
         ev.preventDefault(); $("#rGo").disabled = true; $("#rGo").textContent = "Ouverture…";
         let r; try { r = await openBlob(blob, $("#rPw").value); } catch { $("#rGo").disabled = false; $("#rGo").textContent = "Restaurer"; return $("#rErr").textContent = "Mot de passe incorrect pour cette sauvegarde."; }
-        const incoming = r.data.entries || [];
+        const hadProfiles = Array.isArray(r.data.profiles) && r.data.profiles.length > 0;
+        ensureProfiles(r.data);
+        const incoming = r.data.entries;
         if (fromSetup || !S || S.demo) {
           // nouveau coffre : il garde le mot de passe de la sauvegarde
-          S = { key: r.key, salt: r.salt, iter: r.iter, data: { entries: incoming }, demo: false };
+          S = { key: r.key, salt: r.salt, iter: r.iter, data: r.data, demo: false };
         } else if ($("#rMode").value === "replace") {
-          S.data.entries = incoming;
+          S.data = r.data;
         } else {
+          if (!hadProfiles) incoming.forEach(e => e.pid = profile().id); // ancienne sauvegarde : dans le profil affiché
           const map = new Map(S.data.entries.map(e => [e.id, e]));
           for (const e of incoming) { const cur = map.get(e.id); if (!cur || (e.updated || 0) > (cur.updated || 0)) map.set(e.id, e); }
           S.data.entries = [...map.values()];
+          const known = new Set(S.data.profiles.map(p => p.id));
+          if (hadProfiles) for (const p of r.data.profiles) if (!known.has(p.id)) S.data.profiles.push(p);
         }
         try { await save(); } catch { return $("#rErr").textContent = "Enregistrement impossible sur cet appareil."; }
-        closeSheet(); startSession(); toast(incoming.length + " identifiant(s) restauré(s)");
+        closeSheet(); startSession();
+        toast(r.data.shared && (fromSetup || !S || S.demo) ? "Profil ajouté. Le code de partage est devenu votre code : changez-le dans Réglages." : incoming.length + " identifiant(s) restauré(s)");
       };
     });
   };
