@@ -1,7 +1,7 @@
 // Mon Coffre : fonctionne hors ligne. Aucune donnée personnelle n'est envoyée nulle part.
 // L'app s'affiche depuis l'iPhone, et la nouvelle version éventuelle est téléchargée
 // en arrière-plan pour la prochaine ouverture.
-const C = "moncoffre-v4";
+const C = "moncoffre-v5";
 const LOGOS = "moncoffre-logos";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(C).then(c => c.addAll(FILES))); self.skipWaiting(); });
@@ -20,6 +20,16 @@ self.addEventListener("fetch", e => {
     return;
   }
   if (url.origin !== location.origin) return;
+  if (e.request.mode === "navigate") {
+    // page de l'app : on prend la dernière version en ligne (4 s max), sinon celle gardée sur l'iPhone
+    e.respondWith(caches.open(C).then(async cache => {
+      const net = fetch(e.request, { cache: "no-cache" }).then(r => { if (r.ok) cache.put("./", r.clone()); return r; });
+      const timeout = new Promise(res => setTimeout(() => res(null), 4000));
+      try { const r = await Promise.race([net, timeout]); if (r && r.ok) return r; } catch {}
+      return (await cache.match("./")) || (await cache.match(e.request, { ignoreSearch: true })) || net;
+    }));
+    return;
+  }
   e.respondWith(caches.open(C).then(async cache => {
     const cached = await cache.match(e.request, { ignoreSearch: true });
     const fresh = fetch(e.request, { cache: "no-cache" }).then(r => { if (r.ok) cache.put(e.request, r.clone()); return r; }).catch(() => null);

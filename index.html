@@ -452,7 +452,8 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) { hiddenAt = Date.now(); if (S) priv.hidden = false; }
   else {
     priv.hidden = true;
-    if (S && Date.now() - hiddenAt > BG_LOCK_MS) lock("");
+    // après 30 s en arrière-plan : on recharge l'app (elle se referme et prend la dernière version)
+    if (hiddenAt && Date.now() - hiddenAt > BG_LOCK_MS) { if (S) lock(""); if (location.protocol === "https:" && !/claude/.test(location.hostname)) location.reload(); }
   }
 });
 
