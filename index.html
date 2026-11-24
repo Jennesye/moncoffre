@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Mon Coffre">
+<meta name="apple-mobile-web-app-title" content="Herbier">
 <meta name="theme-color" content="#eef1f0">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://icons.duckduckgo.com; connect-src 'none'; form-action 'none'; base-uri 'none'">
@@ -15,7 +15,7 @@
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
 </head>
 <body>
-<title>Mon Coffre</title>
+<title>Herbier</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: one-column phone app, sticky top bar, grouped list, bottom sheets for detail and forms */
@@ -141,7 +141,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 </style>
 
 <div id="root"></div>
-<div id="privacy" class="privacy" hidden><div class="lockmark" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div></div>
+<div id="privacy" class="privacy" hidden><div class="lockmark" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19C5 10 10 5 20 4c0 10-5 15-14 15"/><path d="M5 19 14 10"/><path d="M9 15h4M11 13V9"/></svg></div></div>
 
 <script>
 (() => {
@@ -224,7 +224,7 @@ let idleTimer = null, hiddenAt = 0, clipTimer = null;
 const $root = document.getElementById("root");
 const h = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ICON = {
-  lock: '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+  lock: '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19C5 10 10 5 20 4c0 10-5 15-14 15"/><path d="M5 19 14 10"/><path d="M9 15h4M11 13V9"/></svg>',
   lockSm: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
   gear: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   search: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
@@ -241,7 +241,7 @@ function toast(msg) {
 // Sur iPhone, Safari et l'icône de l'écran d'accueil ont chacun leur propre coffre.
 const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const IN_SAFARI_TAB = IS_IOS && !navigator.standalone && !matchMedia("(display-mode: standalone)").matches && location.protocol === "https:" && !/claude/.test(location.hostname);
-const safariNote = () => IN_SAFARI_TAB ? `<div class="note">Vous êtes dans Safari. Le coffre de Safari est séparé de celui de l'app installée, et l'iPhone peut l'effacer au bout de quelques jours. Utilisez plutôt l'icône « Mon Coffre » de votre écran d'accueil (Partager, puis « Sur l'écran d'accueil »).</div>` : "";
+const safariNote = () => IN_SAFARI_TAB ? `<div class="note">Vous êtes dans Safari. Le coffre de Safari est séparé de celui de l'app installée, et l'iPhone peut l'effacer au bout de quelques jours. Utilisez plutôt l'icône « Herbier » de votre écran d'accueil (Partager, puis « Sur l'écran d'accueil »).</div>` : "";
 const SETUP_HINT = () => IN_SAFARI_TAB ? "" : `<p style="font-size:14px">Vous aviez déjà commencé un coffre dans Safari ? Faites-y une sauvegarde (Réglages, « Faire une sauvegarde »), puis touchez « Restaurer une sauvegarde » ci-dessous.</p>`;
 function renderSetup() {
   $root.innerHTML = `<div class="wrap gate"><form class="gate-card" id="setupForm" autocomplete="off">
@@ -279,9 +279,9 @@ function renderUnlock(msg) {
   $root.innerHTML = `<div class="wrap gate"><form class="gate-card" id="unlockForm" autocomplete="off">
     ${safariNote()}
     <div class="lockmark" aria-hidden="true">${ICON.lock}</div>
-    <h1>Mon Coffre</h1>
-    <p>${msg ? h(msg) : "Entrez votre mot de passe maître."}</p>
-    <label class="f" for="mpw">Mot de passe maître<input class="in" id="mpw" type="password" autocomplete="current-password" required></label>
+    <h1>Herbier</h1>
+    <p>${msg ? h(msg) : "Entrez votre code."}</p>
+    <label class="f" for="mpw">Code<input class="in" id="mpw" type="password" autocomplete="current-password" required></label>
     <div class="err" id="err" role="alert"></div>
     <button class="btn primary" id="unlockBtn" type="submit">Déverrouiller</button>
   </form></div>`;
@@ -317,7 +317,7 @@ async function save() {
 function startSession() { query = ""; renderMain(); bumpIdle(); }
 function bumpIdle() {
   clearTimeout(idleTimer);
-  if (S) idleTimer = setTimeout(() => lock("Verrouillé après " + settings.idleMin + " min sans activité."), settings.idleMin * 60000);
+  if (S) idleTimer = setTimeout(() => lock("Fermé après " + settings.idleMin + " min sans activité."), settings.idleMin * 60000);
 }
 ["pointerdown", "keydown", "scroll"].forEach(t => addEventListener(t, bumpIdle, { passive: true }));
 document.addEventListener("visibilitychange", () => {
@@ -325,7 +325,7 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) { hiddenAt = Date.now(); if (S) priv.hidden = false; }
   else {
     priv.hidden = true;
-    if (S && Date.now() - hiddenAt > BG_LOCK_MS) lock("Verrouillé pendant que l'app était fermée.");
+    if (S && Date.now() - hiddenAt > BG_LOCK_MS) lock("");
   }
 });
 
@@ -372,7 +372,7 @@ document.addEventListener("load", ev => { const t = ev.target; if (t.tagName ===
 function renderMain() {
   $root.innerHTML = `<div class="wrap">
     <header class="top">
-      <div class="top-row"><h1>Mon Coffre</h1>
+      <div class="top-row"><h1>Herbier</h1>
         <div class="row"><button class="iconbtn" id="setBtn" aria-label="Réglages et sauvegarde">${ICON.gear}</button>
         <button class="iconbtn" id="lockBtn" aria-label="Verrouiller">${ICON.lockSm}</button></div></div>
       ${S.demo ? '<div class="demo-banner">Démo avec des exemples. Rien n\'est enregistré. Verrouillez pour revenir au début.</div>' : ""}
@@ -551,7 +551,7 @@ async function exportBackup() {
   if (S.demo) return toast("Pas de sauvegarde en mode démo.");
   const blob = await seal(S.key, S.salt, S.iter, S.data);
   const d = new Date(), stamp = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-  const name = `MonCoffre-sauvegarde-${stamp}.json`;
+  const name = `Herbier-${stamp}.json`;
   const file = new File([JSON.stringify({ ...blob, exportedAt: d.toISOString() })], name, { type: "application/json" });
   try {
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -571,7 +571,7 @@ function pickBackup(fromSetup) {
   const inp = document.createElement("input"); inp.type = "file"; inp.accept = ".json,application/json";
   inp.onchange = async () => {
     const f = inp.files[0]; if (!f) return;
-    let blob; try { blob = JSON.parse(await f.text()); if (blob.app !== "moncoffre" || !blob.ct) throw 0; } catch { return toast("Ce fichier n'est pas une sauvegarde Mon Coffre."); }
+    let blob; try { blob = JSON.parse(await f.text()); if (blob.app !== "moncoffre" || !blob.ct) throw 0; } catch { return toast("Ce fichier n'est pas une sauvegarde de l'app."); }
     openSheet(`<div class="sheet-h"><h2>Restaurer</h2><button class="btn ghost" id="rC">Annuler</button></div>
       <form id="rf" class="gate-card" style="max-width:none" autocomplete="off">
         <p style="margin:0;color:var(--muted)">${h(f.name)}. Entrez le mot de passe maître qui était utilisé au moment de cette sauvegarde.</p>
@@ -648,7 +648,7 @@ function openWipe() {
 
 // ---------- Démarrage ----------
 if (!window.crypto || !crypto.subtle) {
-  $root.innerHTML = '<div class="wrap gate"><div class="gate-card"><h1>Mon Coffre</h1><p>Cette page doit être ouverte en https pour pouvoir chiffrer vos données.</p></div></div>';
+  $root.innerHTML = '<div class="wrap gate"><div class="gate-card"><h1>Herbier</h1><p>Cette page doit être ouverte en https pour pouvoir chiffrer vos données.</p></div></div>';
 } else {
   lock();
 }

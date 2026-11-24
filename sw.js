@@ -1,7 +1,7 @@
 // Mon Coffre : fonctionne hors ligne. Aucune donnée personnelle n'est envoyée nulle part.
 // L'app s'affiche depuis l'iPhone, et la nouvelle version éventuelle est téléchargée
 // en arrière-plan pour la prochaine ouverture.
-const C = "moncoffre-v3";
+const C = "moncoffre-v4";
 const LOGOS = "moncoffre-logos";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(C).then(c => c.addAll(FILES))); self.skipWaiting(); });

@@ -1,4 +1,4 @@
-# Mon Coffre
+# Herbier
 
 Petite application iPhone (web app hors ligne) pour noter ses identifiants : nom du site, lien, identifiant, mot de passe, notes. Les sites sont rangés automatiquement par catégories.
 
