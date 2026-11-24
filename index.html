@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mon Coffre">
+<meta name="theme-color" content="#eef1f0">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Mon Coffre</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one-column phone app, sticky top bar, grouped list, bottom sheets for detail and forms */
+:root {
+  --bg: #eef1f0;
+  --surface: #ffffff;
+  --ink: #17211f;
+  --muted: #5c6b68;
+  --line: #d6dddb;
+  --accent: #0f6b5c;
+  --accent-ink: #ffffff;
+  --accent-soft: #dcefea;
+  --danger: #b3261e;
+  --warn: #8a5a00;
+  --warn-soft: #fbefd5;
+  --shade: rgba(10, 20, 18, .45);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1413; --surface: #18211f; --ink: #e7eeec; --muted: #9aaba7; --line: #2b3835;
+    --accent: #4fc2a9; --accent-ink: #06201a; --accent-soft: #173a33; --danger: #ff8a80;
+    --warn: #f3c46b; --warn-soft: #3a2f17; --shade: rgba(0, 0, 0, .6); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1413; --surface: #18211f; --ink: #e7eeec; --muted: #9aaba7; --line: #2b3835;
+  --accent: #4fc2a9; --accent-ink: #06201a; --accent-soft: #173a33; --danger: #ff8a80;
+  --warn: #f3c46b; --warn-soft: #3a2f17; --shade: rgba(0, 0, 0, .6); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.45 var(--font); margin: 0; -webkit-text-size-adjust: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 560px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 96px; }
+
+/* Lock / setup screens */
+.gate { min-height: 100%; display: flex; align-items: center; justify-content: center; padding-block: 32px; }
+.gate-card { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 14px; }
+.lockmark { width: 64px; height: 64px; border-radius: 18px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+.gate h1 { font-size: 28px; line-height: 1.15; margin: 4px 0 0; text-wrap: balance; letter-spacing: -.01em; }
+.gate p { margin: 0; color: var(--muted); }
+.note { font-size: 14px; background: var(--warn-soft); color: var(--warn); border-radius: 10px; padding: 10px 12px; }
+.err { color: var(--danger); font-size: 14px; min-height: 1.2em; }
+
+label.f { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--muted); font-weight: 600; }
+.in { width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: 17px; color: var(--ink); }
+.in:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+textarea.in { min-height: 76px; resize: vertical; }
+.row { display: flex; gap: 8px; align-items: center; }
+.row > .in { flex: 1; min-width: 0; }
+
+.btn { border: 0; border-radius: 12px; padding: 13px 16px; font-weight: 600; font-size: 16px; background: var(--accent-soft); color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--line); }
+.btn.ghost { background: transparent; color: var(--accent); padding: 8px 10px; }
+.btn.sm { padding: 8px 12px; font-size: 14px; border-radius: 10px; }
+.btn:disabled { opacity: .5; }
+.linkbtn { background: none; border: 0; color: var(--accent); padding: 4px 0; font-weight: 600; text-align: left; }
+
+/* Top bar */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 12px 10px; display: flex; flex-direction: column; gap: 10px; }
+.top-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.top h1 { margin: 0; font-size: 26px; letter-spacing: -.01em; }
+.iconbtn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; color: var(--ink); }
+.search { position: relative; }
+.search input { padding-left: 40px; }
+.search svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+.demo-banner { font-size: 13px; background: var(--warn-soft); color: var(--warn); border-radius: 10px; padding: 8px 12px; }
+
+/* Groups */
+.group { margin-top: 18px; }
+.group-h { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: 0; padding: 4px 2px 8px; color: var(--muted); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.group-h .count { font-weight: 600; letter-spacing: 0; text-transform: none; background: var(--surface); border: 1px solid var(--line); border-radius: 99px; padding: 0 8px; font-size: 12px; }
+.group-h .chev { margin-left: auto; transition: transform .15s; }
+.group.closed .chev { transform: rotate(-90deg); }
+.group.closed .list { display: none; }
+.list { background: var(--surface); border-radius: var(--r); border: 1px solid var(--line); overflow: hidden; }
+.item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: 0; padding: 12px 14px; border-top: 1px solid var(--line); }
+.item:first-child { border-top: 0; }
+.item:active { background: var(--accent-soft); }
+.av { flex: none; width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; font-weight: 700; font-size: 16px; color: #fff; }
+.item .txt { min-width: 0; flex: 1; }
+.item .n { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .l { color: var(--muted); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.empty { text-align: center; color: var(--muted); padding: 48px 12px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+
+.fab { position: fixed; right: max(20px, calc(env(safe-area-inset-right, 0px) + 20px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); z-index: 6; width: 60px; height: 60px; border-radius: 20px; border: 0; background: var(--accent); color: var(--accent-ink); box-shadow: 0 8px 24px rgba(0,0,0,.22); display: grid; place-items: center; }
+
+/* Sheets */
+.shade { position: fixed; inset: 0; background: var(--shade); z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { width: 100%; max-width: 560px; max-height: 92%; overflow-y: auto; background: var(--bg); border-radius: 20px 20px 0 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 10px calc(env(safe-area-inset-bottom, 0px) + 20px); display: flex; flex-direction: column; gap: 14px; }
+.grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 2px; }
+.sheet-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sheet-h h2 { margin: 0; font-size: 20px; min-width: 0; overflow-wrap: anywhere; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.field { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--line); }
+.field:first-child { border-top: 0; }
+.field .k { font-size: 13px; color: var(--muted); }
+.field .v { overflow-wrap: anywhere; }
+.field .v.mono { font-family: var(--mono); font-size: 16px; }
+.field > div { flex: 1; min-width: 0; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 3px 10px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.warnline { font-size: 14px; background: var(--warn-soft); color: var(--warn); border-radius: 10px; padding: 10px 12px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.actions .btn { flex: 1; }
+.menu { display: flex; flex-direction: column; }
+.menu button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); padding: 14px; }
+.menu button:first-child { border-top: 0; }
+.menu small { color: var(--muted); font-size: 13px; }
+.menu .danger-t { color: var(--danger); font-weight: 600; }
+
+.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 96px); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 15px; z-index: 40; max-width: calc(100% - 32px); text-align: center; }
+.privacy { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: grid; place-items: center; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div id="root"></div>
+<div id="privacy" class="privacy" hidden><div class="lockmark" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div></div>
+
+<script>
+(() => {
+"use strict";
+// ---------- Réglages ----------
+const STORE_KEY = "moncoffre.v1";
+const SETTINGS_KEY = "moncoffre.settings";
+const ITER = 600000;            // PBKDF2-SHA256, recommandation OWASP 2023+
+const BG_LOCK_MS = 30000;       // verrouillé si l'app reste en arrière-plan plus de 30 s
+const CLIP_CLEAR_MS = 45000;
+
+// ---------- Catégories automatiques ----------
+const CATS = [
+  { id: "banque", name: "Banque & finances", color: "#2f6fb0", kw: ["banque","bank","credit agricole","creditagricole","credit mutuel","creditmutuel","cic","lcl","bnp","societe generale","societegenerale","sg.fr","caisse d'epargne","caisse-epargne","banquepopulaire","banque populaire","labanquepostale","banque postale","boursorama","boursobank","fortuneo","hellobank","ing","monabanq","revolut","n26","paypal","lydia","sumeria","qonto","shine","bforbank","axa banque","amex","american express","visa","mastercard","livret","assurance vie","bourse","crypto","binance","coinbase","yomoni","linxea"] },
+  { id: "admin", name: "Impôts & administration", color: "#6b4fb0", kw: ["impots","impot","gouv.fr","gouv","service-public","franceconnect","ants","urssaf","caf","pole-emploi","pole emploi","francetravail","france travail","info-retraite","retraite","agirc","arrco","lassuranceretraite","net-entreprises","infogreffe","inpi","guichet-entreprises","formalites","cadastre","mairie","prefecture","la poste","laposte","ameli identite","msa","cesu","pajemploi"] },
+  { id: "immo", name: "Immobilier & SCI", color: "#0f6b5c", kw: ["sci","immo","immobilier","seloger","logic-immo","bienici","pap.fr","pap","leboncoin immo","foncia","nexity","citya","orpi","century21","laforet","guy hoquet","syndic","copro","coproprietaire","gerance","gestion locative","locataire","bail","loyer","quittance","notaire","notaires","visale","garantme","locservice","edl","etat des lieux","ics","gercop","crypto immo","immofacile","rentila","bailfacile","smartloc","lodgis","diagnostic","patrimoine","dossierfacile","geoportail","cadastre","taxe fonciere","sci familiale"] },
+  { id: "assur", name: "Assurances & santé", color: "#b0524f", kw: ["assurance","assur","axa","maif","macif","matmut","maaf","mma","gmf","allianz","generali","groupama","aviva","abeille","mutuelle","harmonie","mgen","malakoff","ag2r","alan","swisslife","april","ameli","cpam","doctolib","maiia","pharmacie","sante","hopital","laboratoire","cerballiance","biogroup","qare","livi"] },
+  { id: "maison", name: "Énergie, internet & téléphone", color: "#b07d1f", kw: ["edf","engie","totalenergies","total energies","ekwateur","octopus","grdf","enedis","veolia","suez","saur","eau","orange","sosh","sfr","red by sfr","bouygues","bbox","free","freebox","free mobile","la poste mobile","b&you","box","fibre","energie","gaz","electricite"] },
+  { id: "courses", name: "Courses & achats", color: "#c05621", kw: ["amazon","leclerc","carrefour","auchan","intermarche","lidl","aldi","casino","monoprix","franprix","super u","courses u","coursesu","drive","picard","fnac","darty","boulanger","cdiscount","leboncoin","vinted","ikea","leroy merlin","leroymerlin","castorama","bricodepot","decathlon","zalando","shein","ebay","aliexpress","temu","veepee","showroomprive","sephora","nocibe","vente","boutique","shop","store"] },
+  { id: "mail", name: "Mails & réseaux sociaux", color: "#3d7a8a", kw: ["gmail","google","outlook","hotmail","live.fr","microsoft","office","yahoo","proton","protonmail","icloud","apple","orange mail","laposte.net","facebook","instagram","whatsapp","messenger","linkedin","twitter","x.com","tiktok","snapchat","pinterest","youtube","telegram","signal","threads","bluesky","mail","messagerie","dropbox","onedrive","drive"] },
+  { id: "loisirs", name: "Loisirs, voyages & abonnements", color: "#8a3d7a", kw: ["netflix","spotify","deezer","disney","canal","canal+","mycanal","prime video","primevideo","molotov","apple tv","dazn","bein","sncf","sncf-connect","ouigo","air france","airfrance","easyjet","ryanair","transavia","booking","airbnb","abritel","expedia","trainline","blablacar","uber","bolt","club med","pierre et vacances","fnac spectacles","ticketmaster","cinema","pathe","ugc","journal","le monde","figaro","ouest-france","abonnement","kindle","audible","audible.fr","playstation","xbox","nintendo","steam"] },
+];
+const OTHER = { id: "autre", name: "Autres", color: "#6b7774" };
+const ALLCATS = [...CATS, OTHER];
+const catById = id => ALLCATS.find(c => c.id === id) || OTHER;
+
+function norm(s) { return (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+function hostOf(url) { try { return new URL(/^https?:\/\//i.test(url) ? url : "https://" + url).hostname.replace(/^www\./, ""); } catch { return ""; } }
+function guessCat(e) {
+  const hay = " " + norm(e.name) + " " + norm(hostOf(e.url)) + " " + norm(e.url) + " " + norm(e.notes) + " ";
+  let best = null, bestScore = 0;
+  for (const c of CATS) {
+    let score = 0;
+    for (const k of c.kw) {
+      const kk = norm(k);
+      // mots courts : il faut un mot entier ; mots longs : sous-chaîne
+      const hit = kk.length <= 4 ? new RegExp("(^|[^a-z0-9])" + kk.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^a-z0-9]|$)").test(hay) : hay.includes(kk);
+      if (hit) score += kk.length;
+    }
+    if (score > bestScore) { bestScore = score; best = c; }
+  }
+  if (/(^|[^a-z0-9])sci([^a-z0-9]|$)/.test(norm(e.name))) return "immo";
+  return best ? best.id : OTHER.id;
+}
+const catOf = e => e.cat || guessCat(e);
+
+// ---------- Chiffrement ----------
+const enc = new TextEncoder(), dec = new TextDecoder();
+const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function deriveKey(pw, salt, iter) {
+  const base = await crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: iter, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+}
+async function seal(key, salt, iter, obj) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc.encode(JSON.stringify(obj)));
+  return { app: "moncoffre", v: 1, kdf: "PBKDF2-SHA256", iter, salt: b64(salt), iv: b64(iv), ct: b64(ct) };
+}
+async function openBlob(blob, pw) {
+  const salt = unb64(blob.salt);
+  const key = await deriveKey(pw, salt, blob.iter);
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(blob.iv) }, key, unb64(blob.ct));
+  return { key, salt, iter: blob.iter, data: JSON.parse(dec.decode(pt)) };
+}
+
+// ---------- Stockage local ----------
+function readStore() { try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : null; } catch { return null; } }
+function writeStore(blob) { localStorage.setItem(STORE_KEY, JSON.stringify(blob)); }
+function readSettings() { try { return Object.assign({ idleMin: 3, closed: [] }, JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}")); } catch { return { idleMin: 3, closed: [] }; } }
+function writeSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {} }
+
+// ---------- État ----------
+let S = null;          // { key, salt, iter, data:{entries:[]}, demo:bool } quand déverrouillé
+let settings = readSettings();
+let query = "";
+let fails = 0, waitUntil = 0;
+let idleTimer = null, hiddenAt = 0, clipTimer = null;
+
+const $root = document.getElementById("root");
+const h = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ICON = {
+  lock: '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+  lockSm: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+  gear: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  search: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  plus: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  chev: '<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>',
+};
+
+function toast(msg) {
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; t.setAttribute("role", "status");
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2400);
+}
+
+// ---------- Écrans d'accès ----------
+function renderSetup() {
+  $root.innerHTML = `<div class="wrap gate"><form class="gate-card" id="setupForm" autocomplete="off">
+    <div class="lockmark" aria-hidden="true">${ICON.lock}</div>
+    <h1>Créez votre mot de passe maître</h1>
+    <p>Il protège tout le coffre. Vos identifiants restent uniquement sur cet iPhone, chiffrés. Rien ne part sur internet, même en wifi.</p>
+    <label class="f" for="pw1">Mot de passe maître<input class="in" id="pw1" type="password" autocomplete="new-password" minlength="10" required></label>
+    <label class="f" for="pw2">Confirmez-le<input class="in" id="pw2" type="password" autocomplete="new-password" required></label>
+    <div class="note">Notez-le sur papier et rangez-le chez vous. S'il est oublié, personne (pas même moi) ne pourra rouvrir le coffre. Une phrase de 4 ou 5 mots est idéale, par exemple « tulipe-rouge-quai-1987 ».</div>
+    <div class="err" id="err" role="alert"></div>
+    <button class="btn primary" id="createBtn" type="submit">Créer mon coffre</button>
+    <button class="btn" id="importBtn" type="button">Restaurer une sauvegarde</button>
+    <button class="linkbtn" id="demoBtn" type="button">Essayer d'abord avec des exemples</button>
+  </form></div>`;
+  document.getElementById("setupForm").onsubmit = async ev => {
+    ev.preventDefault();
+    const a = pw1.value, b = pw2.value, err = document.getElementById("err");
+    if (a.length < 10) return err.textContent = "Choisissez au moins 10 caractères.";
+    if (a !== b) return err.textContent = "Les deux mots de passe ne sont pas identiques.";
+    const btn = document.getElementById("createBtn"); btn.disabled = true; btn.textContent = "Création…";
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const key = await deriveKey(a, salt, ITER);
+    S = { key, salt, iter: ITER, data: { entries: [] }, demo: false };
+    try { await save(); } catch { S = null; btn.disabled = false; btn.textContent = "Créer mon coffre"; return err.textContent = "Ce navigateur refuse d'enregistrer. Ouvrez l'app depuis l'écran d'accueil."; }
+    try { navigator.storage?.persist?.(); } catch {}
+    startSession();
+  };
+  document.getElementById("importBtn").onclick = () => pickBackup(true);
+  document.getElementById("demoBtn").onclick = startDemo;
+}
+
+function renderUnlock(msg) {
+  $root.innerHTML = `<div class="wrap gate"><form class="gate-card" id="unlockForm" autocomplete="off">
+    <div class="lockmark" aria-hidden="true">${ICON.lock}</div>
+    <h1>Mon Coffre</h1>
+    <p>${msg ? h(msg) : "Entrez votre mot de passe maître."}</p>
+    <label class="f" for="mpw">Mot de passe maître<input class="in" id="mpw" type="password" autocomplete="current-password" required></label>
+    <div class="err" id="err" role="alert"></div>
+    <button class="btn primary" id="unlockBtn" type="submit">Déverrouiller</button>
+  </form></div>`;
+  const input = document.getElementById("mpw");
+  setTimeout(() => input.focus(), 50);
+  document.getElementById("unlockForm").onsubmit = async ev => {
+    ev.preventDefault();
+    const err = document.getElementById("err"), btn = document.getElementById("unlockBtn");
+    const now = Date.now();
+    if (now < waitUntil) return err.textContent = `Trop d'essais. Patientez ${Math.ceil((waitUntil - now) / 1000)} s.`;
+    btn.disabled = true; btn.textContent = "Ouverture…";
+    try {
+      const r = await openBlob(readStore(), input.value);
+      S = { ...r, demo: false }; fails = 0; startSession();
+    } catch {
+      fails++; if (fails >= 3) waitUntil = Date.now() + Math.min(300, 2 ** (fails - 2) * 5) * 1000;
+      btn.disabled = false; btn.textContent = "Déverrouiller"; input.value = "";
+      err.textContent = fails >= 3 ? `Mot de passe incorrect. Patientez ${Math.ceil((waitUntil - Date.now()) / 1000)} s avant de réessayer.` : "Mot de passe incorrect.";
+    }
+  };
+}
+
+function lock(msg) {
+  S = null; query = ""; closeSheet(); clearTimeout(idleTimer);
+  if (readStore()) renderUnlock(msg); else renderSetup();
+}
+
+// ---------- Session ----------
+async function save() {
+  if (!S || S.demo) return;
+  writeStore(await seal(S.key, S.salt, S.iter, S.data));
+}
+function startSession() { query = ""; renderMain(); bumpIdle(); }
+function bumpIdle() {
+  clearTimeout(idleTimer);
+  if (S) idleTimer = setTimeout(() => lock("Verrouillé après " + settings.idleMin + " min sans activité."), settings.idleMin * 60000);
+}
+["pointerdown", "keydown", "scroll"].forEach(t => addEventListener(t, bumpIdle, { passive: true }));
+document.addEventListener("visibilitychange", () => {
+  const priv = document.getElementById("privacy");
+  if (document.hidden) { hiddenAt = Date.now(); if (S) priv.hidden = false; }
+  else {
+    priv.hidden = true;
+    if (S && Date.now() - hiddenAt > BG_LOCK_MS) lock("Verrouillé pendant que l'app était fermée.");
+  }
+});
+
+const DEMO = [
+  ["Crédit Agricole", "https://www.credit-agricole.fr", "0123456789"],
+  ["Impots.gouv", "https://www.impots.gouv.fr", "1234567890123"],
+  ["Infogreffe (SCI)", "https://www.infogreffe.fr", "sci.famille@exemple.fr"],
+  ["Visale", "https://www.visale.fr", "c.exemple@exemple.fr"],
+  ["Doctolib", "https://www.doctolib.fr", "c.exemple@exemple.fr"],
+  ["EDF", "https://particulier.edf.fr", "c.exemple@exemple.fr"],
+  ["Amazon", "https://www.amazon.fr", "c.exemple@exemple.fr"],
+  ["Leclerc Drive", "https://www.leclercdrive.fr", "c.exemple@exemple.fr"],
+  ["Netflix", "https://www.netflix.com", "c.exemple@exemple.fr"],
+  ["Gmail", "https://mail.google.com", "c.exemple@gmail.com"],
+  ["Club de lecture", "https://www.exemple-lecture.fr", "lecteur.75"],
+];
+function startDemo() {
+  const t = Date.now();
+  const entries = DEMO.map((d, i) => ({ id: "d" + i, name: d[0], url: d[1], login: d[2], password: i === 7 ? "Fraise-Velo-42!" : genPassword(), notes: "", cat: null, created: t, updated: t }));
+  entries[6].password = "Fraise-Velo-42!";
+  S = { key: null, salt: null, iter: 0, data: { entries }, demo: true };
+  startSession();
+}
+
+// ---------- Liste principale ----------
+function filtered() {
+  const q = norm(query.trim());
+  const list = S.data.entries;
+  if (!q) return list;
+  return list.filter(e => norm([e.name, e.url, e.login, e.notes, catById(catOf(e)).name].join(" ")).includes(q));
+}
+function avatar(e) {
+  const c = catById(catOf(e)); const letter = (e.name || "?").trim().charAt(0).toUpperCase() || "?";
+  return `<span class="av" style="background:${c.color}" aria-hidden="true">${h(letter)}</span>`;
+}
+function renderMain() {
+  $root.innerHTML = `<div class="wrap">
+    <header class="top">
+      <div class="top-row"><h1>Mon Coffre</h1>
+        <div class="row"><button class="iconbtn" id="setBtn" aria-label="Réglages et sauvegarde">${ICON.gear}</button>
+        <button class="iconbtn" id="lockBtn" aria-label="Verrouiller">${ICON.lockSm}</button></div></div>
+      ${S.demo ? '<div class="demo-banner">Démo avec des exemples. Rien n\'est enregistré. Verrouillez pour revenir au début.</div>' : ""}
+      <div class="search">${ICON.search}<input class="in" id="q" type="search" placeholder="Rechercher un site, un identifiant…" autocomplete="off" value="${h(query)}" aria-label="Rechercher"></div>
+    </header>
+    <main id="groups"></main>
+  </div>
+  <button class="fab" id="addBtn" aria-label="Ajouter un site">${ICON.plus}</button>`;
+  document.getElementById("lockBtn").onclick = () => lock();
+  document.getElementById("setBtn").onclick = openSettings;
+  document.getElementById("addBtn").onclick = () => openForm(null);
+  const q = document.getElementById("q");
+  q.oninput = () => { query = q.value; renderGroups(); };
+  renderGroups();
+}
+function renderGroups() {
+  const box = document.getElementById("groups"); if (!box) return;
+  const items = filtered();
+  if (!S.data.entries.length) {
+    box.innerHTML = `<div class="empty"><strong>Votre coffre est vide</strong><span>Touchez le bouton + pour ajouter votre premier site. Il sera rangé automatiquement dans la bonne catégorie.</span></div>`;
+    return;
+  }
+  if (!items.length) { box.innerHTML = `<div class="empty">Aucun résultat pour « ${h(query)} ».</div>`; return; }
+  const byCat = new Map();
+  for (const e of items) { const c = catOf(e); if (!byCat.has(c)) byCat.set(c, []); byCat.get(c).push(e); }
+  const searching = !!query.trim();
+  box.innerHTML = ALLCATS.filter(c => byCat.has(c.id)).map(c => {
+    const list = byCat.get(c.id).sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
+    const closed = !searching && settings.closed.includes(c.id);
+    return `<section class="group${closed ? " closed" : ""}" data-cat="${c.id}">
+      <button class="group-h" aria-expanded="${!closed}"><span>${h(c.name)}</span><span class="count">${list.length}</span>${ICON.chev}</button>
+      <div class="list">${list.map(e => `<button class="item" data-id="${h(e.id)}">${avatar(e)}<span class="txt"><div class="n">${h(e.name)}</div><div class="l">${h(e.login || hostOf(e.url) || "")}</div></span></button>`).join("")}</div>
+    </section>`;
+  }).join("");
+  box.querySelectorAll(".group-h").forEach(b => b.onclick = () => {
+    const sec = b.closest(".group"), id = sec.dataset.cat;
+    sec.classList.toggle("closed"); b.setAttribute("aria-expanded", !sec.classList.contains("closed"));
+    settings.closed = sec.classList.contains("closed") ? [...new Set([...settings.closed, id])] : settings.closed.filter(x => x !== id);
+    writeSettings();
+  });
+  box.querySelectorAll(".item").forEach(b => b.onclick = () => openDetail(b.dataset.id));
+}
+
+// ---------- Feuilles (sheets) ----------
+function openSheet(html, onReady) {
+  closeSheet();
+  const sh = document.createElement("div"); sh.className = "shade"; sh.id = "shade";
+  sh.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div>`;
+  sh.addEventListener("click", ev => { if (ev.target === sh) closeSheet(); });
+  document.body.appendChild(sh); onReady && onReady(sh);
+}
+function closeSheet() { document.getElementById("shade")?.remove(); }
+function confirmSheet(title, text, okLabel, onOk, danger = true) {
+  openSheet(`<div class="sheet-h"><h2>${h(title)}</h2></div><p style="margin:0;color:var(--muted)">${h(text)}</p>
+    <div class="actions"><button class="btn" id="cNo">Annuler</button><button class="btn ${danger ? "danger" : "primary"}" id="cOk">${h(okLabel)}</button></div>`, sh => {
+    sh.querySelector("#cNo").onclick = closeSheet;
+    sh.querySelector("#cOk").onclick = () => { closeSheet(); onOk(); };
+  });
+}
+
+async function copy(text, what) {
+  try { await navigator.clipboard.writeText(text); toast(what + " copié"); }
+  catch { toast("Copie refusée par l'appareil. Appuyez longuement sur le texte pour le copier."); return; }
+  clearTimeout(clipTimer);
+  clipTimer = setTimeout(() => { navigator.clipboard.writeText(" ").catch(() => {}); }, CLIP_CLEAR_MS);
+}
+function openUrl(url) { const u = /^https?:\/\//i.test(url) ? url : "https://" + url; return u; }
+
+function openDetail(id) {
+  const e = S.data.entries.find(x => x.id === id); if (!e) return;
+  const c = catById(catOf(e));
+  const twins = e.password ? S.data.entries.filter(x => x.id !== e.id && x.password === e.password) : [];
+  openSheet(`
+    <div class="sheet-h"><div class="row" style="min-width:0">${avatar(e)}<h2>${h(e.name)}</h2></div><button class="btn ghost" id="dClose">Fermer</button></div>
+    <div><span class="chip">${h(c.name)}</span></div>
+    <div class="card">
+      ${e.url ? `<div class="field"><div><div class="k">Lien</div><div class="v">${h(hostOf(e.url) || e.url)}</div></div><a class="btn sm" href="${h(openUrl(e.url))}" target="_blank" rel="noopener noreferrer">Ouvrir</a></div>` : ""}
+      <div class="field"><div><div class="k">Identifiant</div><div class="v">${h(e.login) || "<span style='color:var(--muted)'>Non renseigné</span>"}</div></div>${e.login ? '<button class="btn sm" id="cLogin">Copier</button>' : ""}</div>
+      <div class="field"><div><div class="k">Mot de passe</div><div class="v mono" id="pwv">••••••••••</div></div><button class="btn sm" id="showPw" aria-pressed="false">Voir</button><button class="btn sm" id="cPw">Copier</button></div>
+      ${e.notes ? `<div class="field"><div><div class="k">Notes</div><div class="v" style="white-space:pre-wrap">${h(e.notes)}</div></div></div>` : ""}
+    </div>
+    ${twins.length ? `<div class="warnline">Ce mot de passe sert aussi pour : ${twins.map(t => h(t.name)).join(", ")}. Il vaut mieux un mot de passe différent par site.</div>` : ""}
+    <div class="actions"><button class="btn" id="dEdit">Modifier</button><button class="btn danger" id="dDel">Supprimer</button></div>`, sh => {
+    sh.querySelector("#dClose").onclick = closeSheet;
+    sh.querySelector("#cLogin") && (sh.querySelector("#cLogin").onclick = () => copy(e.login, "Identifiant"));
+    sh.querySelector("#cPw").onclick = () => copy(e.password, "Mot de passe");
+    sh.querySelector("#showPw").onclick = ev => {
+      const shown = ev.target.getAttribute("aria-pressed") === "true";
+      sh.querySelector("#pwv").textContent = shown ? "••••••••••" : e.password;
+      ev.target.setAttribute("aria-pressed", String(!shown)); ev.target.textContent = shown ? "Voir" : "Cacher";
+    };
+    sh.querySelector("#dEdit").onclick = () => openForm(e.id);
+    sh.querySelector("#dDel").onclick = () => confirmSheet("Supprimer " + e.name + " ?", "Cet identifiant sera effacé du coffre.", "Supprimer", async () => {
+      S.data.entries = S.data.entries.filter(x => x.id !== e.id); await save(); renderGroups(); toast("Supprimé");
+    });
+  });
+}
+
+function genPassword(len = 18) {
+  const sets = ["ABCDEFGHJKLMNPQRSTUVWXYZ", "abcdefghijkmnopqrstuvwxyz", "23456789", "!#$%&*+-=?@_"];
+  const all = sets.join(""); const rnd = n => { const a = new Uint32Array(1); let x; do { crypto.getRandomValues(a); x = a[0]; } while (x >= Math.floor(2 ** 32 / n) * n); return x % n; };
+  const out = sets.map(s => s[rnd(s.length)]);
+  while (out.length < len) out.push(all[rnd(all.length)]);
+  for (let i = out.length - 1; i > 0; i--) { const j = rnd(i + 1); [out[i], out[j]] = [out[j], out[i]]; }
+  return out.join("");
+}
+
+function openForm(id) {
+  const e = id ? S.data.entries.find(x => x.id === id) : { name: "", url: "", login: "", password: "", notes: "", cat: null };
+  const opts = `<option value="">Automatique</option>` + ALLCATS.map(c => `<option value="${c.id}" ${e.cat === c.id ? "selected" : ""}>${h(c.name)}</option>`).join("");
+  openSheet(`
+    <div class="sheet-h"><h2>${id ? "Modifier" : "Nouveau site"}</h2><button class="btn ghost" id="fCancel" type="button">Annuler</button></div>
+    <form id="ef" class="gate-card" style="max-width:none" autocomplete="off">
+      <label class="f" for="fName">Nom du site<input class="in" id="fName" required value="${h(e.name)}" placeholder="ex. Impots.gouv"></label>
+      <label class="f" for="fUrl">Lien du site<input class="in" id="fUrl" type="text" inputmode="url" autocapitalize="off" value="${h(e.url)}" placeholder="ex. impots.gouv.fr"></label>
+      <label class="f" for="fLogin">Identifiant<input class="in" id="fLogin" autocapitalize="off" autocorrect="off" spellcheck="false" value="${h(e.login)}" placeholder="e-mail, numéro client…"></label>
+      <label class="f" for="fPw">Mot de passe
+        <span class="row"><input class="in" id="fPw" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" value="${h(e.password)}" style="font-family:var(--mono)"><button class="btn sm" type="button" id="fGen">Générer</button></span></label>
+      <label class="f" for="fCat">Catégorie<select class="in" id="fCat">${opts}</select><span id="fGuess" style="font-weight:400"></span></label>
+      <label class="f" for="fNotes">Notes (facultatif)<textarea class="in" id="fNotes" placeholder="question secrète, n° de contrat…">${h(e.notes)}</textarea></label>
+      <button class="btn primary" type="submit">Enregistrer</button>
+    </form>`, sh => {
+    const $ = s => sh.querySelector(s);
+    const upd = () => { $("#fGuess").textContent = $("#fCat").value ? "" : "Rangé dans : " + catById(guessCat({ name: $("#fName").value, url: $("#fUrl").value, notes: $("#fNotes").value })).name; };
+    ["#fName", "#fUrl", "#fNotes", "#fCat"].forEach(s => $(s).addEventListener("input", upd)); upd();
+    $("#fCancel").onclick = () => id ? openDetail(id) : closeSheet();
+    $("#fGen").onclick = () => { $("#fPw").value = genPassword(); };
+    if (!id) setTimeout(() => $("#fName").focus(), 60);
+    $("#ef").onsubmit = async ev => {
+      ev.preventDefault();
+      const now = Date.now();
+      const vals = { name: $("#fName").value.trim(), url: $("#fUrl").value.trim(), login: $("#fLogin").value.trim(), password: $("#fPw").value, notes: $("#fNotes").value.trim(), cat: $("#fCat").value || null };
+      let target;
+      if (id) { target = S.data.entries.find(x => x.id === id); Object.assign(target, vals, { updated: now }); }
+      else { target = { id: crypto.randomUUID ? crypto.randomUUID() : String(now) + Math.random(), ...vals, created: now, updated: now }; S.data.entries.push(target); }
+      try { await save(); } catch { toast("Enregistrement impossible sur cet appareil."); return; }
+      renderGroups(); openDetail(target.id); toast("Enregistré");
+    };
+  });
+}
+
+// ---------- Réglages, sauvegarde ----------
+function openSettings() {
+  const n = S.data.entries.length;
+  openSheet(`<div class="sheet-h"><h2>Réglages</h2><button class="btn ghost" id="sClose">Fermer</button></div>
+    <div class="card menu">
+      <button id="sExport"><strong>Faire une sauvegarde</strong><small>Fichier chiffré de ${n} identifiant${n > 1 ? "s" : ""}, à ranger dans Fichiers ou sur une clé USB. Il s'ouvre avec votre mot de passe maître.</small></button>
+      <button id="sImport"><strong>Restaurer une sauvegarde</strong><small>Ajoute ou remplace les identifiants à partir d'un fichier de sauvegarde.</small></button>
+      <button id="sPw"><strong>Changer le mot de passe maître</strong></button>
+    </div>
+    <label class="f" for="sIdle">Verrouillage automatique
+      <select class="in" id="sIdle">${[1, 3, 5, 10].map(m => `<option value="${m}" ${settings.idleMin === m ? "selected" : ""}>Après ${m} min sans activité</option>`).join("")}</select>
+      <span style="font-weight:400">Le coffre se verrouille aussi dès que l'app reste plus de 30 secondes en arrière-plan.</span></label>
+    <div class="card menu"><button id="sWipe"><span class="danger-t">Tout effacer de cet iPhone</span><small>Supprime le coffre de cet appareil. Pensez à faire une sauvegarde avant.</small></button></div>`, sh => {
+    const $ = s => sh.querySelector(s);
+    $("#sClose").onclick = closeSheet;
+    $("#sIdle").onchange = ev => { settings.idleMin = +ev.target.value; writeSettings(); bumpIdle(); };
+    $("#sExport").onclick = exportBackup;
+    $("#sImport").onclick = () => pickBackup(false);
+    $("#sPw").onclick = openChangePw;
+    $("#sWipe").onclick = openWipe;
+  });
+}
+
+async function exportBackup() {
+  if (S.demo) return toast("Pas de sauvegarde en mode démo.");
+  const blob = await seal(S.key, S.salt, S.iter, S.data);
+  const d = new Date(), stamp = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  const name = `MonCoffre-sauvegarde-${stamp}.json`;
+  const file = new File([JSON.stringify({ ...blob, exportedAt: d.toISOString() })], name, { type: "application/json" });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: name });
+      toast("Choisissez « Enregistrer dans Fichiers » si ce n'est pas fait.");
+      return;
+    }
+  } catch (err) { if (err && err.name === "AbortError") return; }
+  try {
+    const a = document.createElement("a"); a.href = URL.createObjectURL(file); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast("Sauvegarde créée : " + name);
+  } catch { toast("Cet écran ne permet pas d'enregistrer de fichier."); }
+}
+
+function pickBackup(fromSetup) {
+  const inp = document.createElement("input"); inp.type = "file"; inp.accept = ".json,application/json";
+  inp.onchange = async () => {
+    const f = inp.files[0]; if (!f) return;
+    let blob; try { blob = JSON.parse(await f.text()); if (blob.app !== "moncoffre" || !blob.ct) throw 0; } catch { return toast("Ce fichier n'est pas une sauvegarde Mon Coffre."); }
+    openSheet(`<div class="sheet-h"><h2>Restaurer</h2><button class="btn ghost" id="rC">Annuler</button></div>
+      <form id="rf" class="gate-card" style="max-width:none" autocomplete="off">
+        <p style="margin:0;color:var(--muted)">${h(f.name)}. Entrez le mot de passe maître qui était utilisé au moment de cette sauvegarde.</p>
+        <label class="f" for="rPw">Mot de passe de la sauvegarde<input class="in" id="rPw" type="password" required></label>
+        <div class="err" id="rErr" role="alert"></div>
+        ${fromSetup || !S || S.demo ? "" : `<label class="f" for="rMode">Que faire ?<select class="in" id="rMode"><option value="merge">Ajouter aux identifiants actuels</option><option value="replace">Remplacer tout le coffre actuel</option></select></label>`}
+        <button class="btn primary" type="submit" id="rGo">Restaurer</button>
+      </form>`, sh => {
+      const $ = s => sh.querySelector(s);
+      $("#rC").onclick = closeSheet;
+      $("#rf").onsubmit = async ev => {
+        ev.preventDefault(); $("#rGo").disabled = true; $("#rGo").textContent = "Ouverture…";
+        let r; try { r = await openBlob(blob, $("#rPw").value); } catch { $("#rGo").disabled = false; $("#rGo").textContent = "Restaurer"; return $("#rErr").textContent = "Mot de passe incorrect pour cette sauvegarde."; }
+        const incoming = r.data.entries || [];
+        if (fromSetup || !S || S.demo) {
+          // nouveau coffre : il garde le mot de passe de la sauvegarde
+          S = { key: r.key, salt: r.salt, iter: r.iter, data: { entries: incoming }, demo: false };
+        } else if ($("#rMode").value === "replace") {
+          S.data.entries = incoming;
+        } else {
+          const map = new Map(S.data.entries.map(e => [e.id, e]));
+          for (const e of incoming) { const cur = map.get(e.id); if (!cur || (e.updated || 0) > (cur.updated || 0)) map.set(e.id, e); }
+          S.data.entries = [...map.values()];
+        }
+        try { await save(); } catch { return $("#rErr").textContent = "Enregistrement impossible sur cet appareil."; }
+        closeSheet(); startSession(); toast(incoming.length + " identifiant(s) restauré(s)");
+      };
+    });
+  };
+  inp.click();
+}
+
+function openChangePw() {
+  if (S.demo) return toast("Pas disponible en mode démo.");
+  openSheet(`<div class="sheet-h"><h2>Nouveau mot de passe maître</h2><button class="btn ghost" id="pC">Annuler</button></div>
+    <form id="pf" class="gate-card" style="max-width:none" autocomplete="off">
+      <label class="f" for="pOld">Mot de passe actuel<input class="in" id="pOld" type="password" required></label>
+      <label class="f" for="pN1">Nouveau (10 caractères minimum)<input class="in" id="pN1" type="password" autocomplete="new-password" required></label>
+      <label class="f" for="pN2">Confirmez le nouveau<input class="in" id="pN2" type="password" autocomplete="new-password" required></label>
+      <div class="err" id="pErr" role="alert"></div>
+      <button class="btn primary" type="submit" id="pGo">Changer</button>
+    </form>`, sh => {
+    const $ = s => sh.querySelector(s);
+    $("#pC").onclick = closeSheet;
+    $("#pf").onsubmit = async ev => {
+      ev.preventDefault();
+      if ($("#pN1").value.length < 10) return $("#pErr").textContent = "Choisissez au moins 10 caractères.";
+      if ($("#pN1").value !== $("#pN2").value) return $("#pErr").textContent = "Les deux nouveaux mots de passe ne sont pas identiques.";
+      $("#pGo").disabled = true;
+      try { await openBlob(readStore(), $("#pOld").value); } catch { $("#pGo").disabled = false; return $("#pErr").textContent = "Le mot de passe actuel est incorrect."; }
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      S.key = await deriveKey($("#pN1").value, salt, ITER); S.salt = salt; S.iter = ITER;
+      await save(); closeSheet(); toast("Mot de passe maître changé. Refaites une sauvegarde.");
+    };
+  });
+}
+
+function openWipe() {
+  openSheet(`<div class="sheet-h"><h2>Tout effacer</h2><button class="btn ghost" id="wC">Annuler</button></div>
+    <form id="wf" class="gate-card" style="max-width:none" autocomplete="off">
+      <p style="margin:0;color:var(--muted)">Le coffre et tous ses identifiants seront supprimés de cet iPhone. Tapez EFFACER pour confirmer.</p>
+      <input class="in" id="wTxt" autocapitalize="characters" aria-label="Tapez EFFACER">
+      <button class="btn danger" type="submit">Effacer définitivement</button>
+    </form>`, sh => {
+    sh.querySelector("#wC").onclick = closeSheet;
+    sh.querySelector("#wf").onsubmit = ev => {
+      ev.preventDefault();
+      if (sh.querySelector("#wTxt").value.trim().toUpperCase() !== "EFFACER") return;
+      try { localStorage.removeItem(STORE_KEY); } catch {}
+      lock();
+    };
+  });
+}
+
+// ---------- Démarrage ----------
+if (!window.crypto || !crypto.subtle) {
+  $root.innerHTML = '<div class="wrap gate"><div class="gate-card"><h1>Mon Coffre</h1><p>Cette page doit être ouverte en https pour pouvoir chiffrer vos données.</p></div></div>';
+} else {
+  lock();
+}
+if ("serviceWorker" in navigator && location.protocol === "https:" && !/claude|claudeusercontent/.test(location.hostname)) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+})();
+</script>
+
+</body>
+</html>
