@@ -238,8 +238,14 @@ function toast(msg) {
 }
 
 // ---------- Écrans d'accès ----------
+// Sur iPhone, Safari et l'icône de l'écran d'accueil ont chacun leur propre coffre.
+const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const IN_SAFARI_TAB = IS_IOS && !navigator.standalone && !matchMedia("(display-mode: standalone)").matches && location.protocol === "https:" && !/claude/.test(location.hostname);
+const safariNote = () => IN_SAFARI_TAB ? `<div class="note">Vous êtes dans Safari. Le coffre de Safari est séparé de celui de l'app installée, et l'iPhone peut l'effacer au bout de quelques jours. Utilisez plutôt l'icône « Mon Coffre » de votre écran d'accueil (Partager, puis « Sur l'écran d'accueil »).</div>` : "";
+const SETUP_HINT = () => IN_SAFARI_TAB ? "" : `<p style="font-size:14px">Vous aviez déjà commencé un coffre dans Safari ? Faites-y une sauvegarde (Réglages, « Faire une sauvegarde »), puis touchez « Restaurer une sauvegarde » ci-dessous.</p>`;
 function renderSetup() {
   $root.innerHTML = `<div class="wrap gate"><form class="gate-card" id="setupForm" autocomplete="off">
+    ${safariNote()}
     <div class="lockmark" aria-hidden="true">${ICON.lock}</div>
     <h1>Créez votre mot de passe maître</h1>
     <p>Il protège tout le coffre. Vos identifiants restent uniquement sur cet iPhone, chiffrés. Rien ne part sur internet, même en wifi.</p>
@@ -248,6 +254,7 @@ function renderSetup() {
     <div class="note">Notez-le sur papier et rangez-le chez vous. S'il est oublié, personne (pas même moi) ne pourra rouvrir le coffre. Une phrase de 4 ou 5 mots est idéale, par exemple « tulipe-rouge-quai-1987 ».</div>
     <div class="err" id="err" role="alert"></div>
     <button class="btn primary" id="createBtn" type="submit">Créer mon coffre</button>
+    ${SETUP_HINT()}
     <button class="btn" id="importBtn" type="button">Restaurer une sauvegarde</button>
     <button class="linkbtn" id="demoBtn" type="button">Essayer d'abord avec des exemples</button>
   </form></div>`;
@@ -270,6 +277,7 @@ function renderSetup() {
 
 function renderUnlock(msg) {
   $root.innerHTML = `<div class="wrap gate"><form class="gate-card" id="unlockForm" autocomplete="off">
+    ${safariNote()}
     <div class="lockmark" aria-hidden="true">${ICON.lock}</div>
     <h1>Mon Coffre</h1>
     <p>${msg ? h(msg) : "Entrez votre mot de passe maître."}</p>
