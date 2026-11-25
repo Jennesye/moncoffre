@@ -177,25 +177,29 @@ const CATS = [
   { id: "loisirs", name: "Loisirs, voyages & abonnements", color: "#8a3d7a", kw: ["netflix","spotify","deezer","disney","canal","canal+","mycanal","prime video","primevideo","molotov","apple tv","dazn","bein","sncf","sncf-connect","ouigo","air france","airfrance","easyjet","ryanair","transavia","booking","airbnb","abritel","expedia","trainline","blablacar","uber","bolt","club med","pierre et vacances","fnac spectacles","ticketmaster","cinema","pathe","ugc","journal","le monde","figaro","ouest-france","abonnement","kindle","audible","audible.fr","playstation","xbox","nintendo","steam"] },
 ];
 const OTHER = { id: "autre", name: "Autres", color: "#6b7774" };
-const ALLCATS = [...CATS, OTHER];
-const catById = id => ALLCATS.find(c => c.id === id) || OTHER;
+// Catégories créées par l'utilisatrice (enregistrées dans le coffre chiffré)
+const CCOLORS = ["#5f7a4e", "#a0522d", "#4a6fa5", "#9c4f86", "#2e8b8b", "#b8860b", "#7b6cb0", "#c0504d"];
+const customCats = () => (S && S.data && S.data.cats) || [];
+const allCats = () => [...CATS, ...customCats(), OTHER];
+const catById = id => allCats().find(c => c.id === id) || OTHER;
+const splitKw = t => (t || "").split(/[,;\n]/).map(x => x.trim()).filter(x => x.length >= 2);
 
 function norm(s) { return (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
 function hostOf(url) { try { return new URL(/^https?:\/\//i.test(url) ? url : "https://" + url).hostname.replace(/^www\./, ""); } catch { return ""; } }
 function guessCat(e) {
   const hay = " " + norm(e.name) + " " + norm(hostOf(e.url)) + " " + norm(e.url) + " " + norm(e.notes) + " ";
   let best = null, bestScore = 0;
-  for (const c of CATS) {
+  for (const c of [...customCats(), ...CATS]) {
     let score = 0;
-    for (const k of c.kw) {
+    for (const k of (c.kw || [])) {
       const kk = norm(k);
       // mots courts : il faut un mot entier ; mots longs : sous-chaîne
       const hit = kk.length <= 4 ? new RegExp("(^|[^a-z0-9])" + kk.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^a-z0-9]|$)").test(hay) : hay.includes(kk);
-      if (hit) score += kk.length;
+      if (hit) score += kk.length * (c.custom ? 2 : 1);
     }
     if (score > bestScore) { bestScore = score; best = c; }
   }
-  if (/(^|[^a-z0-9])sci([^a-z0-9]|$)/.test(norm(e.name))) return "immo";
+  if (!(best && best.custom) && /(^|[^a-z0-9])sci([^a-z0-9]|$)/.test(norm(e.name))) return "immo";
   return best ? best.id : OTHER.id;
 }
 const catOf = e => e.cat || guessCat(e);
@@ -237,6 +241,7 @@ const newId = () => crypto.randomUUID ? crypto.randomUUID() : String(Date.now())
 // Les anciens coffres (sans profils) sont rangés dans un premier profil « Moi ».
 function ensureProfiles(data) {
   if (!Array.isArray(data.entries)) data.entries = [];
+  if (!Array.isArray(data.cats)) data.cats = [];
   if (!Array.isArray(data.profiles) || !data.profiles.length) data.profiles = [{ id: newId(), name: "Moi", color: PCOLORS[0] }];
   const first = data.profiles[0].id, ids = new Set(data.profiles.map(p => p.id));
   for (const e of data.entries) if (!e.pid || !ids.has(e.pid)) e.pid = first;
@@ -404,7 +409,7 @@ function openShare(pid) {
       $("#shGo").disabled = true; $("#shGo").textContent = "Préparation…";
       const salt = crypto.getRandomValues(new Uint8Array(16));
       const key = await deriveKey(code, salt, ITER);
-      const blob = await seal(key, salt, ITER, { profiles: [p], entries: list, shared: true });
+      const blob = await seal(key, salt, ITER, { profiles: [p], entries: list, cats: customCats().filter(c => list.some(e => e.cat === c.id)), shared: true });
       const file = new File([JSON.stringify({ ...blob, exportedAt: new Date().toISOString() })], `Herbier-${p.name.replace(/[^\p{L}\p{N}-]+/gu, "_")}-${today()}.json`, { type: "application/json" });
       $("#shGo").remove();
       const send = document.createElement("button"); send.type = "button"; send.className = "btn primary"; send.textContent = "Envoyer le fichier";
@@ -412,6 +417,47 @@ function openShare(pid) {
       $("#shf").appendChild(send);
       $("#shErr").textContent = ""; toast("Fichier prêt");
     };
+  });
+}
+function openCats() {
+  const cs = customCats();
+  const count = id => S.data.entries.filter(e => e.cat === id).length;
+  openSheet(`<div class="sheet-h"><h2>Catégories</h2><button class="btn ghost" id="ccC">Fermer</button></div>
+    <p style="margin:0;color:var(--muted);font-size:14px">Les mots-clés sont facultatifs : un nouveau site dont le nom ou le lien contient l'un d'eux sera rangé ici automatiquement. Vous pouvez aussi choisir la catégorie en modifiant un site.</p>
+    ${cs.length ? `<div class="card">${cs.map(c => `<div class="field" style="flex-direction:column;align-items:stretch">
+      <div class="row"><span class="av" style="background:${c.color};width:28px;height:28px;font-size:13px" aria-hidden="true">${h(c.name.charAt(0).toUpperCase())}</span>
+        <input class="in" data-cn="${h(c.id)}" value="${h(c.name)}" maxlength="40" aria-label="Nom de la catégorie" style="padding:8px 10px">
+        <button class="btn sm danger" data-cd="${h(c.id)}">Supprimer</button></div>
+      <input class="in" data-ck="${h(c.id)}" value="${h((c.kw || []).join(", "))}" placeholder="Mots-clés, séparés par des virgules" aria-label="Mots-clés" style="padding:8px 10px;font-size:15px">
+      <small style="color:var(--muted)">${count(c.id)} site${count(c.id) > 1 ? "s" : ""}</small></div>`).join("")}</div>` : `<div class="empty" style="padding:16px">Aucune catégorie personnelle pour l'instant.</div>`}
+    <form id="ccf" class="gate-card" style="max-width:none" autocomplete="off">
+      <label class="f" for="ccName">Nouvelle catégorie<input class="in" id="ccName" maxlength="40" placeholder="ex. Location Rue des Lilas" required></label>
+      <label class="f" for="ccKw">Mots-clés (facultatif)<input class="in" id="ccKw" placeholder="ex. lilas, syndic martin"></label>
+      <button class="btn primary" type="submit">Créer la catégorie</button>
+    </form>`, sh => {
+    const $ = s => sh.querySelector(s);
+    $("#ccC").onclick = () => { closeSheet(); renderGroups(); };
+    $("#ccf").onsubmit = async ev => {
+      ev.preventDefault();
+      const name = $("#ccName").value.trim(); if (!name) return;
+      S.data.cats.push({ id: "c-" + newId(), name, color: CCOLORS[S.data.cats.length % CCOLORS.length], kw: splitKw($("#ccKw").value), custom: true });
+      await save(); renderGroups(); openCats(); toast("Catégorie « " + name + " » créée");
+    };
+    sh.querySelectorAll("[data-cn]").forEach(i => i.onchange = async () => {
+      const c = S.data.cats.find(x => x.id === i.dataset.cn); const v = i.value.trim();
+      if (!v) { i.value = c.name; return; } c.name = v; await save(); renderGroups(); toast("Renommée");
+    });
+    sh.querySelectorAll("[data-ck]").forEach(i => i.onchange = async () => {
+      const c = S.data.cats.find(x => x.id === i.dataset.ck); c.kw = splitKw(i.value); await save(); renderGroups(); toast("Mots-clés enregistrés");
+    });
+    sh.querySelectorAll("[data-cd]").forEach(b => b.onclick = () => {
+      const c = S.data.cats.find(x => x.id === b.dataset.cd); const n = count(c.id);
+      confirmSheet("Supprimer la catégorie " + c.name + " ?", n ? `Ses ${n} site${n > 1 ? "s" : ""} ne sont pas effacés : ils retournent dans les catégories automatiques.` : "Elle est vide.", "Supprimer", async () => {
+        S.data.entries.forEach(e => { if (e.cat === c.id) e.cat = null; });
+        S.data.cats = S.data.cats.filter(x => x.id !== c.id);
+        await save(); renderGroups(); openCats(); toast("Catégorie supprimée");
+      });
+    });
   });
 }
 function openProfiles() {
@@ -530,7 +576,7 @@ function renderGroups() {
   const byCat = new Map();
   for (const e of items) { const c = catOf(e); if (!byCat.has(c)) byCat.set(c, []); byCat.get(c).push(e); }
   const searching = !!query.trim();
-  box.innerHTML = ALLCATS.filter(c => byCat.has(c.id)).map(c => {
+  box.innerHTML = allCats().filter(c => byCat.has(c.id)).map(c => {
     const list = byCat.get(c.id).sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
     const closed = !searching && settings.closed.includes(c.id);
     return `<section class="group${closed ? " closed" : ""}" data-cat="${c.id}">
@@ -614,7 +660,7 @@ function genPassword(len = 18) {
 function openForm(id) {
   const e = id ? S.data.entries.find(x => x.id === id) : { name: "", url: "", login: "", password: "", notes: "", cat: null, pid: profile().id };
   const popts = S.data.profiles.map(p => `<option value="${h(p.id)}" ${e.pid === p.id ? "selected" : ""}>${h(p.name)}</option>`).join("");
-  const opts = `<option value="">Automatique</option>` + ALLCATS.map(c => `<option value="${c.id}" ${e.cat === c.id ? "selected" : ""}>${h(c.name)}</option>`).join("");
+  const opts = `<option value="">Automatique</option>` + allCats().map(c => `<option value="${h(c.id)}" ${e.cat === c.id ? "selected" : ""}>${h(c.name)}</option>`).join("") + `<option value="__new">+ Nouvelle catégorie…</option>`;
   openSheet(`
     <div class="sheet-h"><h2>${id ? "Modifier" : "Nouveau site"}</h2><button class="btn ghost" id="fCancel" type="button">Annuler</button></div>
     <form id="ef" class="gate-card" style="max-width:none" autocomplete="off">
@@ -624,6 +670,7 @@ function openForm(id) {
       <label class="f" for="fPw">Mot de passe
         <span class="row"><input class="in" id="fPw" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" value="${h(e.password)}" style="font-family:var(--mono)"><button class="btn sm" type="button" id="fGen">Générer</button></span></label>
       <label class="f" for="fCat">Catégorie<select class="in" id="fCat">${opts}</select><span id="fGuess" style="font-weight:400"></span></label>
+      <label class="f" for="fNewCat" id="fNewCatRow" hidden>Nom de la nouvelle catégorie<input class="in" id="fNewCat" maxlength="40" placeholder="ex. Location Rue des Lilas"></label>
       ${S.data.profiles.length > 1 ? `<label class="f" for="fPid">Profil<select class="in" id="fPid">${popts}</select></label>` : ""}
       <label class="f" for="fNotes">Notes (facultatif)<textarea class="in" id="fNotes" placeholder="question secrète, n° de contrat…">${h(e.notes)}</textarea></label>
       <button class="btn primary" type="submit">Enregistrer</button>
@@ -631,11 +678,11 @@ function openForm(id) {
     const $ = s => sh.querySelector(s);
     let logoT = null;
     const updLogo = () => { clearTimeout(logoT); logoT = setTimeout(() => {
-      const v = { name: $("#fName").value || "?", url: $("#fUrl").value, notes: "", cat: $("#fCat").value || null };
+      const cv = $("#fCat").value; const v = { name: $("#fName").value || "?", url: $("#fUrl").value, notes: "", cat: cv && cv !== "__new" ? cv : null };
       $("#fLogo").innerHTML = hostOf(v.url) && /\./.test(hostOf(v.url)) ? avatar(v) + "<span>" + h(hostOf(v.url)) + "</span>" : "";
     }, 500); };
     ["#fName", "#fUrl", "#fCat"].forEach(s => $(s).addEventListener("input", updLogo)); updLogo();
-    const upd = () => { $("#fGuess").textContent = $("#fCat").value ? "" : "Rangé dans : " + catById(guessCat({ name: $("#fName").value, url: $("#fUrl").value, notes: $("#fNotes").value })).name; };
+    const upd = () => { $("#fNewCatRow").hidden = $("#fCat").value !== "__new"; if (!$("#fNewCatRow").hidden && document.activeElement === $("#fCat")) setTimeout(() => $("#fNewCat").focus(), 50); $("#fGuess").textContent = $("#fCat").value ? "" : "Rangé dans : " + catById(guessCat({ name: $("#fName").value, url: $("#fUrl").value, notes: $("#fNotes").value })).name; };
     ["#fName", "#fUrl", "#fNotes", "#fCat"].forEach(s => $(s).addEventListener("input", upd)); upd();
     $("#fCancel").onclick = () => id ? openDetail(id) : closeSheet();
     $("#fGen").onclick = () => { $("#fPw").value = genPassword(); };
@@ -643,6 +690,13 @@ function openForm(id) {
     $("#ef").onsubmit = async ev => {
       ev.preventDefault();
       const now = Date.now();
+      if ($("#fCat").value === "__new") {
+        const nm = $("#fNewCat").value.trim();
+        if (!nm) { $("#fNewCat").focus(); return toast("Donnez un nom à la nouvelle catégorie."); }
+        const c = { id: "c-" + newId(), name: nm, color: CCOLORS[S.data.cats.length % CCOLORS.length], kw: [], custom: true };
+        S.data.cats.push(c);
+        const o = document.createElement("option"); o.value = c.id; o.textContent = nm; $("#fCat").appendChild(o); $("#fCat").value = c.id;
+      }
       const vals = { name: $("#fName").value.trim(), url: $("#fUrl").value.trim(), login: $("#fLogin").value.trim(), password: $("#fPw").value, notes: $("#fNotes").value.trim(), cat: $("#fCat").value || null, pid: $("#fPid") ? $("#fPid").value : e.pid };
       let target;
       if (id) { target = S.data.entries.find(x => x.id === id); Object.assign(target, vals, { updated: now }); }
@@ -662,6 +716,7 @@ function openSettings() {
       <button id="sExport"><strong>Faire une sauvegarde</strong><small>Fichier chiffré de ${n} identifiant${n > 1 ? "s" : ""} (tous les profils), à ranger dans Fichiers ou sur une clé USB. Il s'ouvre avec votre mot de passe maître.</small></button>
       <button id="sImport"><strong>Restaurer une sauvegarde</strong><small>Ajoute ou remplace les identifiants à partir d'une sauvegarde, ou ajoute un profil qu'on vous a partagé.</small></button>
       <button id="sProf"><strong>Profils</strong><small>${S.data.profiles.map(p => h(p.name)).join(", ")}. Ajouter, renommer ou supprimer.</small></button>
+      <button id="sCats"><strong>Catégories</strong><small>${customCats().length ? customCats().map(c => h(c.name)).join(", ") + ". " : ""}Créer vos propres catégories.</small></button>
       <button id="sPw"><strong>Changer le mot de passe maître</strong></button>
     </div>
     <label class="f" for="sIdle">Verrouillage automatique
@@ -679,6 +734,7 @@ function openSettings() {
     $("#sImport").onclick = () => pickBackup(false);
     $("#sPw").onclick = openChangePw;
     $("#sProf").onclick = openProfiles;
+    $("#sCats").onclick = openCats;
     $("#sWipe").onclick = openWipe;
   });
 }
@@ -741,6 +797,8 @@ function pickBackup(fromSetup) {
           S.data.entries = [...map.values()];
           const known = new Set(S.data.profiles.map(p => p.id));
           if (hadProfiles) for (const p of r.data.profiles) if (!known.has(p.id)) S.data.profiles.push(p);
+          const knownC = new Set(S.data.cats.map(c => c.id));
+          for (const c of r.data.cats) if (!knownC.has(c.id)) S.data.cats.push(c);
         }
         try { await save(); } catch { return $("#rErr").textContent = "Enregistrement impossible sur cet appareil."; }
         closeSheet(); startSession();
