@@ -99,8 +99,32 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .group.closed .chev { transform: rotate(-90deg); }
 .group.closed .list { display: none; }
 .list { background: var(--surface); border-radius: var(--r); border: 1px solid var(--line); overflow: hidden; }
-.item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: 0; padding: 12px 14px; border-top: 1px solid var(--line); }
-.item:first-child { border-top: 0; }
+.irow { display: flex; align-items: stretch; border-top: 1px solid var(--line); }
+.irow:first-child { border-top: 0; }
+.item { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 12px 4px 12px 14px; }
+.go { flex: none; display: grid; place-items: center; width: 52px; color: var(--accent); text-decoration: none; }
+.go:active { background: var(--accent-soft); }
+.go span { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; background: var(--accent-soft); }
+.cico { flex: none; width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; color: #fff; }
+.cico svg { width: 15px; height: 15px; }
+.cico.lg { width: 34px; height: 34px; border-radius: 10px; }
+.cico.lg svg { width: 20px; height: 20px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.sw { width: 34px; height: 34px; border-radius: 50%; border: 3px solid transparent; outline: 1px solid var(--line); }
+.sw[aria-pressed="true"] { border-color: var(--surface); outline: 3px solid var(--ink); }
+.igrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 8px; }
+.ib { height: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; color: var(--ink); }
+.ib[aria-pressed="true"] { border: 2px solid var(--accent); background: var(--accent-soft); color: var(--accent); }
+.ib svg { width: 22px; height: 22px; }
+.crow { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); padding: 10px 14px; }
+.crow:first-child { border-top: 0; }
+.crow span.nm { flex: 1; min-width: 0; font-weight: 600; }
+.crow small { color: var(--muted); }
+.reminder { display: flex; flex-direction: column; gap: 8px; background: var(--accent-soft); color: var(--ink); border-radius: var(--r); padding: 12px 14px; font-size: 15px; }
+.pinin { font-size: 28px; letter-spacing: .5em; text-align: center; font-family: var(--mono); }
+details.more summary { cursor: pointer; color: var(--accent); font-weight: 600; padding: 4px 0; }
+details.more[open] summary { margin-bottom: 10px; }
+details.more > div { display: flex; flex-direction: column; gap: 14px; }
 .item:active { background: var(--accent-soft); }
 .av { flex: none; position: relative; overflow: hidden; width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; font-weight: 700; font-size: 16px; color: #fff; }
 .av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #fff; padding: 6px; }
@@ -136,8 +160,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .menu .danger-t { color: var(--danger); font-weight: 600; }
 
 .who { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 4px 12px 4px 4px; font-weight: 600; font-size: 15px; color: var(--ink); max-width: 100%; min-width: 0; }
-.who .dot, .pf .dot { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 14px; }
+.dot { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 14px; }
 .who span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dot.emo { font-size: 17px; line-height: 1; }
+.pf .dot.emo { font-size: 32px; }
+.egrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; max-height: 220px; overflow-y: auto; padding: 2px; }
+.eb { height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 24px; line-height: 1; color: var(--muted); }
+.eb[aria-pressed="true"] { border: 2px solid var(--accent); background: var(--accent-soft); }
 .pgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .pf { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); text-align: center; }
 .pf .dot { width: 56px; height: 56px; font-size: 24px; }
@@ -177,11 +206,42 @@ const CATS = [
   { id: "loisirs", name: "Loisirs, voyages & abonnements", color: "#8a3d7a", kw: ["netflix","spotify","deezer","disney","canal","canal+","mycanal","prime video","primevideo","molotov","apple tv","dazn","bein","sncf","sncf-connect","ouigo","air france","airfrance","easyjet","ryanair","transavia","booking","airbnb","abritel","expedia","trainline","blablacar","uber","bolt","club med","pierre et vacances","fnac spectacles","ticketmaster","cinema","pathe","ugc","journal","le monde","figaro","ouest-france","abonnement","kindle","audible","audible.fr","playstation","xbox","nintendo","steam"] },
 ];
 const OTHER = { id: "autre", name: "Autres", color: "#6b7774" };
+// Petites icônes pour les catégories
+const CICONS = {
+  bank: '<path d="M3 10h18L12 4 3 10z"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>',
+  doc: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+  house: '<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>',
+  shield: '<path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z"/>',
+  bolt: '<path d="M13 3 5 14h6l-1 7 8-11h-6z"/>',
+  cart: '<path d="M3 4h2l2 11h11l2-8H6"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+  star: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  tag: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>',
+  heart: '<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
+  cross: '<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/>',
+  briefcase: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2M3 12h18"/>',
+  car: '<path d="M5 16v-5l2-5h10l2 5v5"/><path d="M3 16h18v3H3z"/>',
+  key: '<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3"/>',
+  leaf: '<path d="M5 19C5 10 10 5 20 4c0 10-5 15-14 15"/><path d="M5 19 14 10"/>',
+  phone: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>',
+  school: '<path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/>',
+  plane: '<path d="M2 12h20M14 12l-4-8h-2l2 8M14 12l-4 8h-2l2-8M4 12 3 9M4 12l-1 3"/>',
+  gift: '<rect x="3" y="8" width="18" height="4"/><path d="M5 12v9h14v-9M12 8v13"/><path d="M12 8c-2-4-6-3-5-1s5 1 5 1 4 1 5-1-3-3-5 1"/>',
+  music: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+};
+const CDEF_ICON = { banque: "bank", admin: "doc", immo: "house", assur: "shield", maison: "bolt", courses: "cart", mail: "mail", loisirs: "star", autre: "tag" };
+const CSW = ["#2f6fb0", "#4a6fa5", "#3d7a8a", "#0f6b5c", "#5f7a4e", "#b8860b", "#c05621", "#b0524f", "#c0504d", "#9c4f86", "#8a3d7a", "#6b4fb0", "#6b7774", "#3b3f44"];
+const svgI = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${CICONS[name] || CICONS.tag}</svg>`;
+const cIco = (c, lg) => `<span class="cico${lg ? " lg" : ""}" style="background:${c.color}">${svgI(c.icon)}</span>`;
 // Catégories créées par l'utilisatrice (enregistrées dans le coffre chiffré)
 const CCOLORS = ["#5f7a4e", "#a0522d", "#4a6fa5", "#9c4f86", "#2e8b8b", "#b8860b", "#7b6cb0", "#c0504d"];
 const customCats = () => (S && S.data && S.data.cats) || [];
 const allCats = () => [...CATS, ...customCats(), OTHER];
-const catById = id => allCats().find(c => c.id === id) || OTHER;
+function styled(c) {
+  const st = (S && S.data && S.data.catStyle && S.data.catStyle[c.id]) || {};
+  return { ...c, icon: st.icon || c.icon || CDEF_ICON[c.id] || "tag", color: st.color || c.color };
+}
+const catById = id => styled(allCats().find(c => c.id === id) || OTHER);
 const splitKw = t => (t || "").split(/[,;\n]/).map(x => x.trim()).filter(x => x.length >= 2);
 
 function norm(s) { return (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
@@ -208,10 +268,12 @@ const catOf = e => e.cat || guessCat(e);
 const enc = new TextEncoder(), dec = new TextDecoder();
 const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
 const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
-async function deriveKey(pw, salt, iter) {
-  const base = await crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveKey"]);
-  return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: iter, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+async function deriveRaw(pw, salt, iter) {
+  const base = await crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations: iter, hash: "SHA-256" }, base, 256));
 }
+const keyFromRaw = raw => crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+async function deriveKey(pw, salt, iter) { return keyFromRaw(await deriveRaw(pw, salt, iter)); }
 async function seal(key, salt, iter, obj) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc.encode(JSON.stringify(obj)));
@@ -219,20 +281,40 @@ async function seal(key, salt, iter, obj) {
 }
 async function openBlob(blob, pw) {
   const salt = unb64(blob.salt);
-  const key = await deriveKey(pw, salt, blob.iter);
+  const raw = await deriveRaw(pw, salt, blob.iter);
+  const key = await keyFromRaw(raw);
   const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(blob.iv) }, key, unb64(blob.ct));
-  return { key, salt, iter: blob.iter, data: JSON.parse(dec.decode(pt)) };
+  return { key, raw, salt, iter: blob.iter, data: JSON.parse(dec.decode(pt)) };
+}
+// ---------- Code rapide (4 à 6 chiffres) ----------
+// Après l'ouverture avec le code long, la clé du coffre est gardée chiffrée par le code rapide
+// dans la mémoire de session de l'app (effacée quand l'app est fermée complètement).
+// Le code long est redemandé au démarrage, après 12 h, ou après 3 erreurs.
+const QUICK_KEY = "herbier.quick", QUICK_ITER = 300000, QUICK_TTL = 12 * 3600000;
+function readQuick() {
+  try { const q = JSON.parse(sessionStorage.getItem(QUICK_KEY) || "null"); if (!q) return null; if (Date.now() > q.exp) { clearQuick(); return null; } return q; } catch { return null; }
+}
+function clearQuick() { try { sessionStorage.removeItem(QUICK_KEY); } catch {} }
+async function armQuick(force) {
+  if (!S || S.demo || !S.data.pin || !S.raw) { if (S && !S.demo && !S.data.pin) clearQuick(); return; }
+  if (!force && readQuick()) return;
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const pk = await deriveKey(S.data.pin, salt, QUICK_ITER);
+  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, pk, S.raw);
+  try { sessionStorage.setItem(QUICK_KEY, JSON.stringify({ salt: b64(salt), iv: b64(iv), ct: b64(ct), exp: Date.now() + QUICK_TTL, tries: 0 })); } catch {}
 }
 
 // ---------- Stockage local ----------
 function readStore() { try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : null; } catch { return null; } }
 function writeStore(blob) { localStorage.setItem(STORE_KEY, JSON.stringify(blob)); }
-function readSettings() { try { return Object.assign({ idleMin: 3, closed: [], icons: true }, JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}")); } catch { return { idleMin: 3, closed: [], icons: true }; } }
+function readSettings() { try { return Object.assign({ idleMin: 3, closed: [], icons: true, theme: "auto" }, JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}")); } catch { return { idleMin: 3, closed: [], icons: true, theme: "auto" }; } }
+function applyTheme() { const r = document.documentElement; if (settings.theme === "light" || settings.theme === "dark") r.setAttribute("data-theme", settings.theme); else r.removeAttribute("data-theme"); }
 function writeSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {} }
 
 // ---------- État ----------
 let S = null;          // { key, salt, iter, data:{entries:[]}, demo:bool } quand déverrouillé
 let settings = readSettings();
+applyTheme();
 let query = "";
 let curPid = null;     // profil affiché
 const PCOLORS = ["#2f6fb0", "#b0524f", "#8a3d7a", "#b07d1f", "#3d7a8a", "#0f6b5c"];
@@ -248,7 +330,11 @@ function ensureProfiles(data) {
   return data;
 }
 const profile = () => S.data.profiles.find(p => p.id === curPid) || S.data.profiles[0];
-const pDot = p => `<span class="dot" style="background:${p.color}" aria-hidden="true">${h((p.name || "?").trim().charAt(0).toUpperCase() || "?")}</span>`;
+const swatchRow = (cur, attr) => `<div class="swatches">${CSW.map(c => `<button type="button" class="sw" style="background:${c}" ${attr}="${c}" aria-label="Couleur" aria-pressed="${c === cur}"></button>`).join("")}</div>`;
+// Images de profil : des emojis, dessinés par l'iPhone lui-même (rien n'est chargé depuis internet)
+const PEMOJI = ["🌸","🌻","🌿","🍀","🌵","🌳","🍁","🌙","⭐","☀️","🌈","❄️","🔥","💧","🐱","🐶","🦊","🐻","🐼","🐨","🦁","🐯","🐰","🦄","🐴","🐢","🐬","🦋","🐝","🐞","🦉","🐧","🐥","🍎","🍓","🍒","🍋","🥑","🍕","🧁","☕","🍷","⚽","🎾","🚴","🏊","🎨","🎵","🎸","📚","✈️","🚗","🏠","⛵","🏔️","🏖️","👑","💎","🎁","❤️","💙","💚","💜","🧡","👩","👨","👧","👦","👵","👴","👶","🧑"];
+const pDot = (p, big) => p.emoji ? `<span class="dot emo" style="background:${p.color}" aria-hidden="true">${h(p.emoji)}</span>` : `<span class="dot" style="background:${p.color}" aria-hidden="true">${h((p.name || "?").trim().charAt(0).toUpperCase() || "?")}</span>`;
+const emojiGrid = (cur, attr) => `<div class="egrid"><button type="button" class="eb" ${attr}="" aria-pressed="${!cur}" aria-label="Initiale">Aa</button>${PEMOJI.map(x => `<button type="button" class="eb" ${attr}="${x}" aria-pressed="${x === cur}">${x}</button>`).join("")}</div>`;
 let fails = 0, waitUntil = 0;
 let idleTimer = null, hiddenAt = 0, clipTimer = null;
 
@@ -260,6 +346,7 @@ const ICON = {
   gear: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   search: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
   plus: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  out: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
   chev: '<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>',
 };
 
@@ -297,8 +384,8 @@ function renderSetup() {
     if (a !== b) return err.textContent = "Les deux mots de passe ne sont pas identiques.";
     const btn = document.getElementById("createBtn"); btn.disabled = true; btn.textContent = "Création…";
     const salt = crypto.getRandomValues(new Uint8Array(16));
-    const key = await deriveKey(a, salt, ITER);
-    S = { key, salt, iter: ITER, data: ensureProfiles({ entries: [] }), demo: false };
+    const raw = await deriveRaw(a, salt, ITER), key = await keyFromRaw(raw);
+    S = { key, raw, salt, iter: ITER, data: ensureProfiles({ entries: [] }), demo: false };
     try { await save(); } catch { S = null; btn.disabled = false; btn.textContent = "Créer mon coffre"; return err.textContent = "Ce navigateur refuse d'enregistrer. Ouvrez l'app depuis l'écran d'accueil."; }
     try { navigator.storage?.persist?.(); } catch {}
     startSession();
@@ -336,9 +423,44 @@ function renderUnlock(msg) {
   };
 }
 
+function renderPinUnlock(msg) {
+  $root.innerHTML = `<div class="wrap gate"><form class="gate-card" id="pinForm" autocomplete="off">
+    ${safariNote()}
+    <div class="lockmark" aria-hidden="true">${ICON.lock}</div>
+    <h1>Herbier</h1>
+    <p>${msg ? h(msg) : "Entrez votre code rapide."}</p>
+    <input class="in pinin" id="qpin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" aria-label="Code rapide" required>
+    <div class="err" id="err" role="alert"></div>
+    <button class="btn primary" id="pinBtn" type="submit">Ouvrir</button>
+    <button class="linkbtn" id="useLong" type="button" style="align-self:center">Utiliser le code long</button>
+  </form></div>`;
+  const input = document.getElementById("qpin");
+  setTimeout(() => input.focus(), 50);
+  document.getElementById("useLong").onclick = () => { clearQuick(); renderUnlock(); };
+  document.getElementById("pinForm").onsubmit = async ev => {
+    ev.preventDefault();
+    const q = readQuick(); if (!q) return renderUnlock();
+    const btn = document.getElementById("pinBtn"); btn.disabled = true; btn.textContent = "Ouverture…";
+    try {
+      const pk = await deriveKey(input.value, unb64(q.salt), QUICK_ITER);
+      const raw = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(q.iv) }, pk, unb64(q.ct)));
+      const key = await keyFromRaw(raw), blob = readStore();
+      const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(blob.iv) }, key, unb64(blob.ct));
+      S = { key, raw, salt: unb64(blob.salt), iter: blob.iter, data: JSON.parse(dec.decode(pt)), demo: false };
+      q.tries = 0; try { sessionStorage.setItem(QUICK_KEY, JSON.stringify(q)); } catch {}
+      startSession();
+    } catch {
+      q.tries = (q.tries || 0) + 1;
+      if (q.tries >= 3) { clearQuick(); return renderUnlock("3 erreurs. Pour votre sécurité, entrez votre code long."); }
+      try { sessionStorage.setItem(QUICK_KEY, JSON.stringify(q)); } catch {}
+      btn.disabled = false; btn.textContent = "Ouvrir"; input.value = "";
+      document.getElementById("err").textContent = `Code incorrect. Encore ${3 - q.tries} essai${3 - q.tries > 1 ? "s" : ""}.`;
+    }
+  };
+}
 function lock(msg) {
   S = null; query = ""; closeSheet(); clearTimeout(idleTimer);
-  if (readStore()) renderUnlock(msg); else renderSetup();
+  if (!readStore()) renderSetup(); else if (readQuick()) renderPinUnlock(msg); else renderUnlock(msg);
 }
 
 // ---------- Session ----------
@@ -351,6 +473,7 @@ function startSession() {
   const migrate = !Array.isArray(S.data.profiles) || !S.data.profiles.length;
   ensureProfiles(S.data);
   if (migrate) save().catch(() => {});
+  armQuick(false).catch(() => {});
   if (S.data.profiles.length > 1) renderProfiles(); else { curPid = S.data.profiles[0].id; renderMain(); }
   bumpIdle();
 }
@@ -371,14 +494,20 @@ function openAddProfile(fromPicker) {
   openSheet(`<div class="sheet-h"><h2>Nouveau profil</h2><button class="btn ghost" id="apC" type="button">Annuler</button></div>
     <form id="apf" class="gate-card" style="max-width:none" autocomplete="off">
       <label class="f" for="apName">Prénom<input class="in" id="apName" required maxlength="30" placeholder="ex. Paul"></label>
+      <div class="f" style="display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted);font-weight:600">Image${emojiGrid("", "data-ape")}</div>
+      <div class="f" style="display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted);font-weight:600">Couleur${swatchRow(PCOLORS[S.data.profiles.length % PCOLORS.length], "data-apc")}</div>
       <button class="btn primary" type="submit">Créer le profil</button>
     </form>`, sh => {
     sh.querySelector("#apC").onclick = closeSheet;
+    let pc = PCOLORS[S.data.profiles.length % PCOLORS.length];
+    let pe = "";
+    sh.querySelectorAll("[data-ape]").forEach(b => b.onclick = () => { pe = b.dataset.ape; sh.querySelectorAll("[data-ape]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
+    sh.querySelectorAll("[data-apc]").forEach(b => b.onclick = () => { pc = b.dataset.apc; sh.querySelectorAll("[data-apc]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
     setTimeout(() => sh.querySelector("#apName").focus(), 60);
     sh.querySelector("#apf").onsubmit = async ev => {
       ev.preventDefault();
       const name = sh.querySelector("#apName").value.trim(); if (!name) return;
-      const p = { id: newId(), name, color: PCOLORS[S.data.profiles.length % PCOLORS.length] };
+      const p = { id: newId(), name, color: pc, emoji: pe };
       S.data.profiles.push(p); await save(); closeSheet();
       if (fromPicker) renderProfiles(); else { curPid = p.id; renderMain(); }
       toast("Profil « " + name + " » créé");
@@ -421,52 +550,69 @@ function openShare(pid) {
 }
 function openCats() {
   const cs = customCats();
-  const count = id => S.data.entries.filter(e => e.cat === id).length;
+  const count = id => S.data.entries.filter(e => catOf(e) === id).length;
   openSheet(`<div class="sheet-h"><h2>Catégories</h2><button class="btn ghost" id="ccC">Fermer</button></div>
-    <p style="margin:0;color:var(--muted);font-size:14px">Les mots-clés sont facultatifs : un nouveau site dont le nom ou le lien contient l'un d'eux sera rangé ici automatiquement. Vous pouvez aussi choisir la catégorie en modifiant un site.</p>
-    ${cs.length ? `<div class="card">${cs.map(c => `<div class="field" style="flex-direction:column;align-items:stretch">
-      <div class="row"><span class="av" style="background:${c.color};width:28px;height:28px;font-size:13px" aria-hidden="true">${h(c.name.charAt(0).toUpperCase())}</span>
-        <input class="in" data-cn="${h(c.id)}" value="${h(c.name)}" maxlength="40" aria-label="Nom de la catégorie" style="padding:8px 10px">
-        <button class="btn sm danger" data-cd="${h(c.id)}">Supprimer</button></div>
-      <input class="in" data-ck="${h(c.id)}" value="${h((c.kw || []).join(", "))}" placeholder="Mots-clés, séparés par des virgules" aria-label="Mots-clés" style="padding:8px 10px;font-size:15px">
-      <small style="color:var(--muted)">${count(c.id)} site${count(c.id) > 1 ? "s" : ""}</small></div>`).join("")}</div>` : `<div class="empty" style="padding:16px">Aucune catégorie personnelle pour l'instant.</div>`}
+    <p style="margin:0;color:var(--muted);font-size:14px">Touchez une catégorie pour changer son icône, sa couleur ou son nom.</p>
+    <div class="card">${allCats().map(styled).map(c => `<button class="crow" data-ce="${h(c.id)}">${cIco(c, true)}<span class="nm">${h(c.name)}${c.custom ? "" : ' <small>(auto)</small>'}</span><small>${count(c.id)}</small></button>`).join("")}</div>
     <form id="ccf" class="gate-card" style="max-width:none" autocomplete="off">
       <label class="f" for="ccName">Nouvelle catégorie<input class="in" id="ccName" maxlength="40" placeholder="ex. Location Rue des Lilas" required></label>
-      <label class="f" for="ccKw">Mots-clés (facultatif)<input class="in" id="ccKw" placeholder="ex. lilas, syndic martin"></label>
+      <label class="f" for="ccKw">Mots-clés (facultatif)<input class="in" id="ccKw" placeholder="ex. lilas, syndic martin"><span style="font-weight:400">Un nouveau site dont le nom ou le lien contient l'un de ces mots y sera rangé automatiquement.</span></label>
       <button class="btn primary" type="submit">Créer la catégorie</button>
     </form>`, sh => {
     const $ = s => sh.querySelector(s);
     $("#ccC").onclick = () => { closeSheet(); renderGroups(); };
+    sh.querySelectorAll("[data-ce]").forEach(b => b.onclick = () => openCatEdit(b.dataset.ce));
     $("#ccf").onsubmit = async ev => {
       ev.preventDefault();
       const name = $("#ccName").value.trim(); if (!name) return;
-      S.data.cats.push({ id: "c-" + newId(), name, color: CCOLORS[S.data.cats.length % CCOLORS.length], kw: splitKw($("#ccKw").value), custom: true });
-      await save(); renderGroups(); openCats(); toast("Catégorie « " + name + " » créée");
+      const c = { id: "c-" + newId(), name, color: CCOLORS[S.data.cats.length % CCOLORS.length], icon: "tag", kw: splitKw($("#ccKw").value), custom: true };
+      S.data.cats.push(c);
+      await save(); renderGroups(); openCatEdit(c.id); toast("Catégorie « " + name + " » créée. Choisissez son icône.");
     };
-    sh.querySelectorAll("[data-cn]").forEach(i => i.onchange = async () => {
-      const c = S.data.cats.find(x => x.id === i.dataset.cn); const v = i.value.trim();
-      if (!v) { i.value = c.name; return; } c.name = v; await save(); renderGroups(); toast("Renommée");
-    });
-    sh.querySelectorAll("[data-ck]").forEach(i => i.onchange = async () => {
-      const c = S.data.cats.find(x => x.id === i.dataset.ck); c.kw = splitKw(i.value); await save(); renderGroups(); toast("Mots-clés enregistrés");
-    });
-    sh.querySelectorAll("[data-cd]").forEach(b => b.onclick = () => {
-      const c = S.data.cats.find(x => x.id === b.dataset.cd); const n = count(c.id);
-      confirmSheet("Supprimer la catégorie " + c.name + " ?", n ? `Ses ${n} site${n > 1 ? "s" : ""} ne sont pas effacés : ils retournent dans les catégories automatiques.` : "Elle est vide.", "Supprimer", async () => {
-        S.data.entries.forEach(e => { if (e.cat === c.id) e.cat = null; });
-        S.data.cats = S.data.cats.filter(x => x.id !== c.id);
-        await save(); renderGroups(); openCats(); toast("Catégorie supprimée");
-      });
-    });
+  });
+}
+function openCatEdit(id) {
+  const c = catById(id); const custom = S.data.cats.find(x => x.id === id);
+  if (!S.data.catStyle) S.data.catStyle = {};
+  const n = S.data.entries.filter(e => e.cat === id).length;
+  openSheet(`<div class="sheet-h"><div class="row" style="min-width:0">${cIco(c, true)}<h2>${h(c.name)}</h2></div><button class="btn ghost" id="ceDone">Terminé</button></div>
+    ${custom ? `<label class="f" for="ceName">Nom<input class="in" id="ceName" maxlength="40" value="${h(custom.name)}"></label>
+    <label class="f" for="ceKw">Mots-clés (facultatif)<input class="in" id="ceKw" value="${h((custom.kw || []).join(", "))}" placeholder="séparés par des virgules"></label>` : ""}
+    <div class="f" style="display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--muted);font-weight:600">Icône<div class="igrid">${Object.keys(CICONS).map(k => `<button type="button" class="ib" data-ic="${k}" aria-pressed="${k === c.icon}" aria-label="${k}">${svgI(k)}</button>`).join("")}</div></div>
+    <div class="f" style="display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--muted);font-weight:600">Couleur${swatchRow(c.color, "data-cc")}</div>
+    ${custom ? `<button class="btn danger" id="ceDel">Supprimer cette catégorie</button>` : ""}`, sh => {
+    const $ = s => sh.querySelector(s);
+    const setStyle = async (k, v) => { S.data.catStyle[id] = { ...(S.data.catStyle[id] || {}), [k]: v }; await save(); renderGroups(); openCatEdit(id); };
+    sh.querySelectorAll("[data-ic]").forEach(b => b.onclick = () => setStyle("icon", b.dataset.ic));
+    sh.querySelectorAll("[data-cc]").forEach(b => b.onclick = () => setStyle("color", b.dataset.cc));
+    $("#ceDone").onclick = async () => {
+      if (custom) { const v = $("#ceName").value.trim(); if (v) custom.name = v; custom.kw = splitKw($("#ceKw").value); await save(); }
+      renderGroups(); openCats();
+    };
+    $("#ceDel") && ($("#ceDel").onclick = () => confirmSheet("Supprimer la catégorie " + custom.name + " ?", n ? `Ses ${n} site${n > 1 ? "s" : ""} ne sont pas effacés : ils retournent dans les catégories automatiques.` : "Elle est vide.", "Supprimer", async () => {
+      S.data.entries.forEach(e => { if (e.cat === id) e.cat = null; });
+      S.data.cats = S.data.cats.filter(x => x.id !== id); delete S.data.catStyle[id];
+      await save(); renderGroups(); openCats(); toast("Catégorie supprimée");
+    }));
+  });
+}
+function openProfileLook(pid) {
+  const p = S.data.profiles.find(x => x.id === pid);
+  openSheet(`<div class="sheet-h"><div class="row" style="min-width:0">${pDot(p)}<h2>${h(p.name)}</h2></div><button class="btn ghost" id="plDone">Terminé</button></div>
+    <div class="f" style="display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted);font-weight:600">Image${emojiGrid(p.emoji || "", "data-pe")}</div>
+    <div class="f" style="display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted);font-weight:600">Couleur${swatchRow(p.color, "data-pcol")}</div>`, sh => {
+    sh.querySelector("#plDone").onclick = () => openProfiles();
+    sh.querySelectorAll("[data-pe]").forEach(b => b.onclick = async () => { p.emoji = b.dataset.pe; await save(); openProfileLook(pid); });
+    sh.querySelectorAll("[data-pcol]").forEach(b => b.onclick = async () => { p.color = b.dataset.pcol; await save(); openProfileLook(pid); });
   });
 }
 function openProfiles() {
   const ps = S.data.profiles;
   openSheet(`<div class="sheet-h"><h2>Profils</h2><button class="btn ghost" id="mpC">Fermer</button></div>
     <p style="margin:0;color:var(--muted);font-size:14px">Un seul code ouvre l'app. Chaque profil a sa propre liste de sites.</p>
-    <div class="card">${ps.map(p => `<div class="prow">${pDot(p)}<input class="in" data-ren="${h(p.id)}" value="${h(p.name)}" maxlength="30" aria-label="Nom du profil">
+    <div class="card">${ps.map(p => `<div class="field" style="flex-direction:column;align-items:stretch"><div class="row"><button type="button" data-look="${h(p.id)}" aria-label="Changer l'image et la couleur" style="background:none;border:0;padding:0">${pDot(p)}</button><input class="in" data-ren="${h(p.id)}" value="${h(p.name)}" maxlength="30" aria-label="Nom du profil" style="padding:8px 10px">
       <button class="btn sm" data-share="${h(p.id)}">Partager</button>
-      ${ps.length > 1 ? `<button class="btn sm danger" data-del="${h(p.id)}">Supprimer</button>` : ""}</div>`).join("")}</div>
+      ${ps.length > 1 ? `<button class="btn sm danger" data-del="${h(p.id)}">Supprimer</button>` : ""}</div><button type="button" class="linkbtn" data-look="${h(p.id)}">Changer l'image et la couleur</button></div>`).join("")}</div>
     <button class="btn" id="mpAdd">+ Ajouter un profil</button>`, sh => {
     sh.querySelector("#mpC").onclick = () => { closeSheet(); renderMain(); };
     sh.querySelector("#mpAdd").onclick = () => openAddProfile(false);
@@ -476,6 +622,7 @@ function openProfiles() {
       p.name = v; await save(); toast("Renommé");
     });
     sh.querySelectorAll("[data-share]").forEach(b => b.onclick = () => openShare(b.dataset.share));
+    sh.querySelectorAll("[data-look]").forEach(b => b.onclick = () => openProfileLook(b.dataset.look));
     sh.querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
       const p = S.data.profiles.find(x => x.id === b.dataset.del);
       const n = S.data.entries.filter(e => e.pid === p.id).length;
@@ -526,12 +673,19 @@ function startDemo() {
   startSession();
 }
 
+// ---------- Rappel de sauvegarde (tous les mois) ----------
+const DAY = 86400000;
+function backupDue() {
+  if (!S || S.demo || S.data.entries.length < 3) return false;
+  if (settings.snoozeUntil && Date.now() < settings.snoozeUntil) return false;
+  return !settings.lastBackup || Date.now() - settings.lastBackup > 30 * DAY;
+}
 // ---------- Liste principale ----------
 function filtered() {
   const q = norm(query.trim());
   const list = S.data.entries.filter(e => e.pid === profile().id);
   if (!q) return list;
-  return list.filter(e => norm([e.name, e.url, e.login, e.notes, catById(catOf(e)).name].join(" ")).includes(q));
+  return list.filter(e => norm([e.name, e.url, e.login, e.notes, e.clientNo, catById(catOf(e)).name].join(" ")).includes(q));
 }
 // Logo du site : demandé une seule fois au service d'icônes de DuckDuckGo (seul le nom du site,
 // ex. "amazon.fr", est transmis ; jamais l'identifiant ni le mot de passe), puis gardé sur l'iPhone.
@@ -548,19 +702,24 @@ document.addEventListener("load", ev => { const t = ev.target; if (t.tagName ===
 function renderMain() {
   $root.innerHTML = `<div class="wrap">
     <header class="top">
-      <div class="top-row"><button class="who" id="whoBtn" aria-label="Changer de profil">${pDot(profile())}<span>${h(profile().name)}</span>${S.data.profiles.length > 1 ? ICON.chev.replace('class="chev"', "") : ""}</button>
+      <div class="top-row"><button class="who" id="whoBtn" aria-label="Changer de profil" style="border-color:${profile().color}">${pDot(profile())}<span>${h(profile().name)}</span>${S.data.profiles.length > 1 ? ICON.chev.replace('class="chev"', "") : ""}</button>
         <div class="row"><button class="iconbtn" id="setBtn" aria-label="Réglages et sauvegarde">${ICON.gear}</button>
         <button class="iconbtn" id="lockBtn" aria-label="Verrouiller">${ICON.lockSm}</button></div></div>
       ${S.demo ? '<div class="demo-banner">Démo avec des exemples. Rien n\'est enregistré. Verrouillez pour revenir au début.</div>' : ""}
       <div class="search">${ICON.search}<input class="in" id="q" type="search" placeholder="Rechercher un site, un identifiant…" autocomplete="off" value="${h(query)}" aria-label="Rechercher"></div>
     </header>
+    ${backupDue() ? `<div class="reminder" id="bkRem"><span>${settings.lastBackup ? "Votre dernière sauvegarde date de plus d'un mois." : "Vous n'avez pas encore fait de sauvegarde."} Elle vous permet de tout récupérer si vous changez d'iPhone.</span><div class="row"><button class="btn sm primary" id="bkNow">Faire une sauvegarde</button><button class="btn sm ghost" id="bkLater">Plus tard</button></div></div>` : ""}
     <main id="groups"></main>
   </div>
-  <button class="fab" id="addBtn" aria-label="Ajouter un site">${ICON.plus}</button>`;
+  <button class="fab" id="addBtn" aria-label="Ajouter un site" style="background:${profile().color};color:#fff">${ICON.plus}</button>`;
   document.getElementById("lockBtn").onclick = () => lock();
   document.getElementById("setBtn").onclick = openSettings;
   document.getElementById("whoBtn").onclick = () => S.data.profiles.length > 1 ? renderProfiles() : openProfiles();
   document.getElementById("addBtn").onclick = () => openForm(null);
+  if (document.getElementById("bkRem")) {
+    document.getElementById("bkNow").onclick = exportBackup;
+    document.getElementById("bkLater").onclick = () => { settings.snoozeUntil = Date.now() + 7 * DAY; writeSettings(); document.getElementById("bkRem").remove(); };
+  }
   const q = document.getElementById("q");
   q.oninput = () => { query = q.value; renderGroups(); };
   renderGroups();
@@ -576,12 +735,12 @@ function renderGroups() {
   const byCat = new Map();
   for (const e of items) { const c = catOf(e); if (!byCat.has(c)) byCat.set(c, []); byCat.get(c).push(e); }
   const searching = !!query.trim();
-  box.innerHTML = allCats().filter(c => byCat.has(c.id)).map(c => {
+  box.innerHTML = allCats().map(styled).filter(c => byCat.has(c.id)).map(c => {
     const list = byCat.get(c.id).sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
     const closed = !searching && settings.closed.includes(c.id);
     return `<section class="group${closed ? " closed" : ""}" data-cat="${c.id}">
-      <button class="group-h" aria-expanded="${!closed}"><span>${h(c.name)}</span><span class="count">${list.length}</span>${ICON.chev}</button>
-      <div class="list">${list.map(e => `<button class="item" data-id="${h(e.id)}">${avatar(e)}<span class="txt"><div class="n">${h(e.name)}</div><div class="l">${h(e.login || hostOf(e.url) || "")}</div></span></button>`).join("")}</div>
+      <button class="group-h" aria-expanded="${!closed}">${cIco(c)}<span>${h(c.name)}</span><span class="count">${list.length}</span>${ICON.chev}</button>
+      <div class="list">${list.map(e => `<div class="irow"><button class="item" data-id="${h(e.id)}">${avatar(e)}<span class="txt"><div class="n">${h(e.name)}</div><div class="l">${h(e.login || hostOf(e.url) || "")}</div></span></button>${e.url ? `<a class="go" href="${h(openUrl(e.url))}" target="_blank" rel="noopener noreferrer" data-go="${h(e.id)}" aria-label="Ouvrir ${h(e.name)}${e.login ? " et copier l'identifiant" : ""}"><span>${ICON.out}</span></a>` : ""}</div>`).join("")}</div>
     </section>`;
   }).join("");
   box.querySelectorAll(".group-h").forEach(b => b.onclick = () => {
@@ -591,6 +750,7 @@ function renderGroups() {
     writeSettings();
   });
   box.querySelectorAll(".item").forEach(b => b.onclick = () => openDetail(b.dataset.id));
+  box.querySelectorAll("[data-go]").forEach(a => a.onclick = () => goSite(S.data.entries.find(x => x.id === a.dataset.go)));
 }
 
 // ---------- Feuilles (sheets) ----------
@@ -617,6 +777,13 @@ async function copy(text, what) {
   clipTimer = setTimeout(() => { navigator.clipboard.writeText(" ").catch(() => {}); }, CLIP_CLEAR_MS);
 }
 function openUrl(url) { const u = /^https?:\/\//i.test(url) ? url : "https://" + url; return u; }
+// Ouvrir le site en un geste : l'identifiant est copié au même moment (le lien s'ouvre tout seul)
+function goSite(e) {
+  if (!e || !e.login) return;
+  try { navigator.clipboard.writeText(e.login).then(() => toast("Identifiant copié, collez-le sur le site"), () => {}); } catch {}
+  clearTimeout(clipTimer);
+  clipTimer = setTimeout(() => { navigator.clipboard.writeText(" ").catch(() => {}); }, CLIP_CLEAR_MS);
+}
 
 function openDetail(id) {
   const e = S.data.entries.find(x => x.id === id); if (!e) return;
@@ -626,9 +793,13 @@ function openDetail(id) {
     <div class="sheet-h"><div class="row" style="min-width:0">${avatar(e)}<h2>${h(e.name)}</h2></div><button class="btn ghost" id="dClose">Fermer</button></div>
     <div><span class="chip">${h(c.name)}</span></div>
     <div class="card">
-      ${e.url ? `<div class="field"><div><div class="k">Lien</div><div class="v">${h(hostOf(e.url) || e.url)}</div></div><a class="btn sm" href="${h(openUrl(e.url))}" target="_blank" rel="noopener noreferrer">Ouvrir</a></div>` : ""}
+      ${e.url ? `<div class="field"><div><div class="k">Lien</div><div class="v">${h(hostOf(e.url) || e.url)}</div></div><a class="btn sm" id="dGo" href="${h(openUrl(e.url))}" target="_blank" rel="noopener noreferrer">Ouvrir</a></div>` : ""}
       <div class="field"><div><div class="k">Identifiant</div><div class="v">${h(e.login) || "<span style='color:var(--muted)'>Non renseigné</span>"}</div></div>${e.login ? '<button class="btn sm" id="cLogin">Copier</button>' : ""}</div>
       <div class="field"><div><div class="k">Mot de passe</div><div class="v mono" id="pwv">••••••••••</div></div><button class="btn sm" id="showPw" aria-pressed="false">Voir</button><button class="btn sm" id="cPw">Copier</button></div>
+      ${e.clientNo ? `<div class="field"><div><div class="k">N° client</div><div class="v mono">${h(e.clientNo)}</div></div><button class="btn sm" data-copy="clientNo" data-what="N° client">Copier</button></div>` : ""}
+      ${e.pin ? `<div class="field"><div><div class="k">Code PIN</div><div class="v mono" data-mask="pin">••••</div></div><button class="btn sm" data-show="pin" aria-pressed="false">Voir</button><button class="btn sm" data-copy="pin" data-what="Code PIN">Copier</button></div>` : ""}
+      ${e.question ? `<div class="field"><div><div class="k">Question secrète</div><div class="v">${h(e.question)}</div></div></div>` : ""}
+      ${e.answer ? `<div class="field"><div><div class="k">Réponse</div><div class="v" data-mask="answer">••••••</div></div><button class="btn sm" data-show="answer" aria-pressed="false">Voir</button><button class="btn sm" data-copy="answer" data-what="Réponse">Copier</button></div>` : ""}
       ${e.notes ? `<div class="field"><div><div class="k">Notes</div><div class="v" style="white-space:pre-wrap">${h(e.notes)}</div></div></div>` : ""}
     </div>
     ${twins.length ? `<div class="warnline">Ce mot de passe sert aussi pour : ${twins.map(t => h(t.name)).join(", ")}. Il vaut mieux un mot de passe différent par site.</div>` : ""}
@@ -636,6 +807,13 @@ function openDetail(id) {
     sh.querySelector("#dClose").onclick = closeSheet;
     sh.querySelector("#cLogin") && (sh.querySelector("#cLogin").onclick = () => copy(e.login, "Identifiant"));
     sh.querySelector("#cPw").onclick = () => copy(e.password, "Mot de passe");
+    sh.querySelector("#dGo") && (sh.querySelector("#dGo").onclick = () => goSite(e));
+    sh.querySelectorAll("[data-copy]").forEach(b => b.onclick = () => copy(e[b.dataset.copy], b.dataset.what));
+    sh.querySelectorAll("[data-show]").forEach(b => b.onclick = () => {
+      const k = b.dataset.show, el = sh.querySelector(`[data-mask="${k}"]`), shown = b.getAttribute("aria-pressed") === "true";
+      el.textContent = shown ? (k === "pin" ? "••••" : "••••••") : e[k];
+      b.setAttribute("aria-pressed", String(!shown)); b.textContent = shown ? "Voir" : "Cacher";
+    });
     sh.querySelector("#showPw").onclick = ev => {
       const shown = ev.target.getAttribute("aria-pressed") === "true";
       sh.querySelector("#pwv").textContent = shown ? "••••••••••" : e.password;
@@ -672,7 +850,13 @@ function openForm(id) {
       <label class="f" for="fCat">Catégorie<select class="in" id="fCat">${opts}</select><span id="fGuess" style="font-weight:400"></span></label>
       <label class="f" for="fNewCat" id="fNewCatRow" hidden>Nom de la nouvelle catégorie<input class="in" id="fNewCat" maxlength="40" placeholder="ex. Location Rue des Lilas"></label>
       ${S.data.profiles.length > 1 ? `<label class="f" for="fPid">Profil<select class="in" id="fPid">${popts}</select></label>` : ""}
-      <label class="f" for="fNotes">Notes (facultatif)<textarea class="in" id="fNotes" placeholder="question secrète, n° de contrat…">${h(e.notes)}</textarea></label>
+      <details class="more"${e.clientNo || e.pin || e.question || e.answer ? " open" : ""}><summary>N° client, code PIN, question secrète</summary><div>
+        <label class="f" for="fClient">N° client ou n° de contrat<input class="in" id="fClient" autocapitalize="off" autocorrect="off" spellcheck="false" value="${h(e.clientNo)}"></label>
+        <label class="f" for="fPin">Code PIN<input class="in" id="fPin" inputmode="numeric" autocomplete="off" value="${h(e.pin)}" style="font-family:var(--mono)"></label>
+        <label class="f" for="fQ">Question secrète<input class="in" id="fQ" value="${h(e.question)}" placeholder="ex. Nom de votre premier animal"></label>
+        <label class="f" for="fA">Réponse<input class="in" id="fA" autocapitalize="off" autocorrect="off" spellcheck="false" value="${h(e.answer)}"></label>
+      </div></details>
+      <label class="f" for="fNotes">Notes (facultatif)<textarea class="in" id="fNotes" placeholder="n° de contrat, adresse, remarque…">${h(e.notes)}</textarea></label>
       <button class="btn primary" type="submit">Enregistrer</button>
     </form>`, sh => {
     const $ = s => sh.querySelector(s);
@@ -697,7 +881,7 @@ function openForm(id) {
         S.data.cats.push(c);
         const o = document.createElement("option"); o.value = c.id; o.textContent = nm; $("#fCat").appendChild(o); $("#fCat").value = c.id;
       }
-      const vals = { name: $("#fName").value.trim(), url: $("#fUrl").value.trim(), login: $("#fLogin").value.trim(), password: $("#fPw").value, notes: $("#fNotes").value.trim(), cat: $("#fCat").value || null, pid: $("#fPid") ? $("#fPid").value : e.pid };
+      const vals = { name: $("#fName").value.trim(), url: $("#fUrl").value.trim(), login: $("#fLogin").value.trim(), password: $("#fPw").value, notes: $("#fNotes").value.trim(), clientNo: $("#fClient").value.trim(), pin: $("#fPin").value.trim(), question: $("#fQ").value.trim(), answer: $("#fA").value.trim(), cat: $("#fCat").value || null, pid: $("#fPid") ? $("#fPid").value : e.pid };
       let target;
       if (id) { target = S.data.entries.find(x => x.id === id); Object.assign(target, vals, { updated: now }); }
       else { target = { id: newId(), ...vals, created: now, updated: now }; S.data.entries.push(target); }
@@ -716,9 +900,12 @@ function openSettings() {
       <button id="sExport"><strong>Faire une sauvegarde</strong><small>Fichier chiffré de ${n} identifiant${n > 1 ? "s" : ""} (tous les profils), à ranger dans Fichiers ou sur une clé USB. Il s'ouvre avec votre mot de passe maître.</small></button>
       <button id="sImport"><strong>Restaurer une sauvegarde</strong><small>Ajoute ou remplace les identifiants à partir d'une sauvegarde, ou ajoute un profil qu'on vous a partagé.</small></button>
       <button id="sProf"><strong>Profils</strong><small>${S.data.profiles.map(p => h(p.name)).join(", ")}. Ajouter, renommer ou supprimer.</small></button>
-      <button id="sCats"><strong>Catégories</strong><small>${customCats().length ? customCats().map(c => h(c.name)).join(", ") + ". " : ""}Créer vos propres catégories.</small></button>
+      <button id="sCats"><strong>Catégories</strong><small>${customCats().length ? customCats().map(c => h(c.name)).join(", ") + ". " : ""}Icônes, couleurs, et vos propres catégories.</small></button>
+      <button id="sQuick"><strong>Code rapide</strong><small>${S.data.pin ? "Activé. " : ""}Un code de 4 à 6 chiffres pour rouvrir l'app vite. Le code long reste demandé quand l'app redémarre.</small></button>
       <button id="sPw"><strong>Changer le mot de passe maître</strong></button>
     </div>
+    <label class="f" for="sTheme">Apparence
+      <select class="in" id="sTheme"><option value="auto" ${settings.theme === "auto" ? "selected" : ""}>Comme l'iPhone</option><option value="light" ${settings.theme === "light" ? "selected" : ""}>Clair</option><option value="dark" ${settings.theme === "dark" ? "selected" : ""}>Sombre</option></select></label>
     <label class="f" for="sIdle">Verrouillage automatique
       <select class="in" id="sIdle">${[1, 3, 5, 10].map(m => `<option value="${m}" ${settings.idleMin === m ? "selected" : ""}>Après ${m} min sans activité</option>`).join("")}</select>
       <span style="font-weight:400">Le coffre se verrouille aussi dès que l'app reste plus de 30 secondes en arrière-plan.</span></label>
@@ -728,11 +915,13 @@ function openSettings() {
     <div class="card menu"><button id="sWipe"><span class="danger-t">Tout effacer de cet iPhone</span><small>Supprime le coffre de cet appareil. Pensez à faire une sauvegarde avant.</small></button></div>`, sh => {
     const $ = s => sh.querySelector(s);
     $("#sClose").onclick = closeSheet;
+    $("#sTheme").onchange = ev => { settings.theme = ev.target.value; writeSettings(); applyTheme(); };
     $("#sIdle").onchange = ev => { settings.idleMin = +ev.target.value; writeSettings(); bumpIdle(); };
     $("#sIcons").onchange = ev => { settings.icons = ev.target.value === "1"; writeSettings(); renderGroups(); };
     $("#sExport").onclick = exportBackup;
     $("#sImport").onclick = () => pickBackup(false);
     $("#sPw").onclick = openChangePw;
+    $("#sQuick").onclick = openQuick;
     $("#sProf").onclick = openProfiles;
     $("#sCats").onclick = openCats;
     $("#sWipe").onclick = openWipe;
@@ -745,7 +934,9 @@ async function exportBackup() {
   const d = new Date(), stamp = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   const name = `Herbier-${stamp}.json`;
   const file = new File([JSON.stringify({ ...blob, exportedAt: d.toISOString() })], name, { type: "application/json" });
-  return offerFile(file);
+  const ok = await offerFile(file);
+  if (ok) { settings.lastBackup = Date.now(); settings.snoozeUntil = 0; writeSettings(); document.getElementById("bkRem")?.remove(); }
+  return ok;
 }
 const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
 async function offerFile(file) {
@@ -754,14 +945,15 @@ async function offerFile(file) {
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], title: name });
       toast("Choisissez « Enregistrer dans Fichiers » si ce n'est pas fait.");
-      return;
+      return true;
     }
-  } catch (err) { if (err && err.name === "AbortError") return; }
+  } catch (err) { if (err && err.name === "AbortError") return false; }
   try {
     const a = document.createElement("a"); a.href = URL.createObjectURL(file); a.download = name;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    toast("Sauvegarde créée : " + name);
-  } catch { toast("Cet écran ne permet pas d'enregistrer de fichier."); }
+    toast("Fichier créé : " + name);
+    return true;
+  } catch { toast("Cet écran ne permet pas d'enregistrer de fichier."); return false; }
 }
 
 function pickBackup(fromSetup) {
@@ -787,7 +979,7 @@ function pickBackup(fromSetup) {
         const incoming = r.data.entries;
         if (fromSetup || !S || S.demo) {
           // nouveau coffre : il garde le mot de passe de la sauvegarde
-          S = { key: r.key, salt: r.salt, iter: r.iter, data: r.data, demo: false };
+          S = { key: r.key, raw: r.raw, salt: r.salt, iter: r.iter, data: r.data, demo: false };
         } else if ($("#rMode").value === "replace") {
           S.data = r.data;
         } else {
@@ -828,12 +1020,36 @@ function openChangePw() {
       $("#pGo").disabled = true;
       try { await openBlob(readStore(), $("#pOld").value); } catch { $("#pGo").disabled = false; return $("#pErr").textContent = "Le mot de passe actuel est incorrect."; }
       const salt = crypto.getRandomValues(new Uint8Array(16));
-      S.key = await deriveKey($("#pN1").value, salt, ITER); S.salt = salt; S.iter = ITER;
-      await save(); closeSheet(); toast("Mot de passe maître changé. Refaites une sauvegarde.");
+      S.raw = await deriveRaw($("#pN1").value, salt, ITER); S.key = await keyFromRaw(S.raw); S.salt = salt; S.iter = ITER;
+      await save(); armQuick(true); closeSheet(); toast("Mot de passe maître changé. Refaites une sauvegarde.");
     };
   });
 }
 
+function openQuick() {
+  if (S.demo) return toast("Pas disponible en mode démo.");
+  openSheet(`<div class="sheet-h"><h2>Code rapide</h2><button class="btn ghost" id="qC" type="button">Fermer</button></div>
+    <p style="margin:0;color:var(--muted)">Quand l'app se ferme toute seule, vous la rouvrez avec ce code de 4 à 6 chiffres. Votre code long reste demandé quand l'app redémarre complètement, au bout de 12 heures, ou après 3 erreurs.</p>
+    <form id="qf" class="gate-card" style="max-width:none" autocomplete="off">
+      <label class="f" for="q1">${S.data.pin ? "Nouveau code rapide" : "Code rapide"} (4 à 6 chiffres)<input class="in pinin" id="q1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" required></label>
+      <label class="f" for="q2">Confirmez-le<input class="in pinin" id="q2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" required></label>
+      <div class="err" id="qErr" role="alert"></div>
+      <button class="btn primary" type="submit">${S.data.pin ? "Changer le code rapide" : "Activer le code rapide"}</button>
+      ${S.data.pin ? `<button class="btn danger" type="button" id="qOff">Désactiver le code rapide</button>` : ""}
+    </form>`, sh => {
+    const $ = s => sh.querySelector(s);
+    $("#qC").onclick = closeSheet;
+    $("#qOff") && ($("#qOff").onclick = async () => { delete S.data.pin; await save(); clearQuick(); closeSheet(); toast("Code rapide désactivé"); });
+    $("#qf").onsubmit = async ev => {
+      ev.preventDefault();
+      const a = $("#q1").value, b = $("#q2").value;
+      if (!/^[0-9]{4,6}$/.test(a)) return $("#qErr").textContent = "Le code doit faire 4 à 6 chiffres.";
+      if (/^(\d)\1+$/.test(a) || "0123456789".includes(a) || "9876543210".includes(a)) return $("#qErr").textContent = "Évitez les codes trop simples comme 1234 ou 0000.";
+      if (a !== b) return $("#qErr").textContent = "Les deux codes ne sont pas identiques.";
+      S.data.pin = a; await save(); await armQuick(true); closeSheet(); toast("Code rapide activé");
+    };
+  });
+}
 function openWipe() {
   openSheet(`<div class="sheet-h"><h2>Tout effacer</h2><button class="btn ghost" id="wC">Annuler</button></div>
     <form id="wf" class="gate-card" style="max-width:none" autocomplete="off">
@@ -845,7 +1061,7 @@ function openWipe() {
     sh.querySelector("#wf").onsubmit = ev => {
       ev.preventDefault();
       if (sh.querySelector("#wTxt").value.trim().toUpperCase() !== "EFFACER") return;
-      try { localStorage.removeItem(STORE_KEY); } catch {}
+      try { localStorage.removeItem(STORE_KEY); } catch {} clearQuick();
       lock();
     };
   });
